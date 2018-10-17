@@ -1,5 +1,11 @@
 import math
 
+
+## This means that the smallest increment will be a 16th note
+## so our sequencer can update ever 32nd
+## ah, we actually do the timeout every 30ms
+## and we'll need a single "sequencer" that each pattern puts events into.
+
 class Point():
     def __init__(self, x, y):
         self.x = x
