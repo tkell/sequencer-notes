@@ -6,10 +6,12 @@ import math
 ## ah, we actually do the timeout every 30ms
 ## and we'll need a single "sequencer" that each pattern puts events into.
 
-class Point():
+
+class Point:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+
 
 def get_times(notes, time_per_note):
     times = []
@@ -20,9 +22,14 @@ def get_times(notes, time_per_note):
         else:
             next_point = notes[0]
 
-        times.append(math.sqrt(abs(point.x - next_point.x) ** 2 + abs(point.y - next_point.y) ** 2))
+        times.append(
+            math.sqrt(
+                abs(point.x - next_point.x) ** 2 + abs(point.y - next_point.y) ** 2
+            )
+        )
     return times
 
-time_per_16th = .125 # 120 bpm
+
+time_per_16th = 0.125  # 120 bpm
 notes = [Point(0, 0), Point(0, 1), Point(1, 1)]
 print(get_times(notes, 0.125))
