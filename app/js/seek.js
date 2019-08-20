@@ -1,3 +1,4 @@
+// Main js file!
 // grid constants
 var gridSize = 32;
 
@@ -75,19 +76,8 @@ function drawSequence(points, color) {
         var circle = drawGridCircle(x, y, color);
         sequence.circles.push(circle);
     }
-    
     return sequence;
 }
-
-// Unsure why xLength is 1025 and not 1028?
-drawGrid(0, 0, 1025, 512, 16, 32, "#a4c3b5");
-
-// Make me some sequences!
-var sequences = [];
-var seq1 = drawSequence([5, 4, 5, 5, 5, 6, 6, 4], "green");
-var seq2 = drawSequence([1, 1, 4, 4, 4, 1 , 2, 1], "blue");
-sequences.push(seq1);
-sequences.push(seq2);
 
 /*
 // The visual tick function!
@@ -95,3 +85,21 @@ var c = sequences[0].circles[0];
 c.fillColor.saturation += 1.0;
 c.fillColor.alpha = 0.5;
 */
+
+
+// --------------------------------------------
+
+function makeSequence(locations, color) {
+    // audio here!
+    var seq1 = drawSequence(locations, color);
+    return sequence;
+}
+
+// Unsure why xLength is 1025 and not 1028?
+drawGrid(0, 0, 1025, 512, 16, 32, "#a4c3b5");
+
+var sequences = [];
+var seq1 = makeSequence([5, 4, 5, 5, 5, 6, 6, 4], "green");
+var seq2 = makeSequence([1, 1, 4, 4, 4, 1 , 2, 1], "blue");
+sequences.push(seq1);
+sequences.push(seq2);
