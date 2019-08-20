@@ -78,12 +78,15 @@ function drawSequence(points, color) {
     return sequence;
 }
 
-/*
-// The visual tick function!
-var c = sequences[0].circles[0];
-c.fillColor.saturation += 1.0;
-c.fillColor.alpha = 0.5;
-*/
+function playVisual(circle, timeout) {
+    circle.fillColor.saturation += 1.0;
+    circle.fillColor.alpha = 0.5;
+    setTimeout(function() {
+        circle.fillColor.saturation -= 1.0;
+        circle.fillColor.alpha = 1.0;
+    }, timeout)
+
+}
 
 // audio code from here -----------------------------
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -101,10 +104,19 @@ function playSound(when, buffer, gain) {
     return source
 }
 
+function playBeep(when) {
+    var timeInSeconds = when / 1000;
+    var oscillator = context.createOscillator();
+    oscillator.type = 'square';
+    oscillator.connect(context.destination);
+    oscillator.start(timeInSeconds);
+    oscillator.stop(timeInSeconds + 0.1);
+}
+
 var transport = {
     'tempo':  120,
     'isPlaying': false,
-    'lookAhead': 0.1, // seconds
+    'lookAhead': 100, // milliseconds
     'scheduleInterval': 30, // milliseconds
     'sequences': [],
 }
@@ -119,20 +131,25 @@ function getNextNoteTime(startTime, sequence) {
 function schedulePlays(startTime) {
     for (var i = 0; i < transport.sequences.length; i++) {
         var sequence = transport.sequences[i];
-        var nextNoteTime = sequence.nextNoteTime;
-        while (nextNoteTime < context.currentTime + transport.lookAhead) {
+        // PLAYING FROM 1, NOT 0, NEED TO FIX, GONNA HACK THE VIS FOR NOW
+        console.log("currentIndex", sequence.currentIndex)
+        if (sequence.nextNoteTime < context.currentTime * 1000 + transport.lookAhead) {
             // gotta somehow sneak the visual updates in here too
-            playSound(nextNoteTime, sequence.buffer, sequence.gain)
-            sequence.currentIndex = (sequence.currentIndex + 1) % sequence.numNotes;
-            var noteTime = sequence.noteTimes[sequence.currentIndex];
-            sequence.nextNoteTime = sequence.nextNoteTime += noteTime
+            var nextIndex = (sequence.currentIndex + 1) % sequence.numNotes
+            var circle = sequence.circles[nextIndex]; // should be currentIndex, see comment re: hack
+            var timeToNextNote = sequence.noteTimes[nextIndex];
+            playVisual(circle, timeToNextNote);
+            playBeep(sequence.nextNoteTime);
+            sequence.currentIndex = nextIndex;
+            // rename sequence.nextNoteTime to indicate that it is absolute time
+            sequence.nextNoteTime = sequence.nextNoteTime += timeToNextNote
        }
     }
 
     // Once all notes for all sequencers in this range are added,
     // schedule the next call
-    Window.timeout(function() {
-        schedulePlay(startTime)
+    setTimeout(function() {
+        schedulePlays(startTime)
     }, transport.scheduleInterval)
 }
 
@@ -168,14 +185,21 @@ function makeSequence(locations, color) {
     sequence.numNotes = locations.length / 2;
     sequence.noteTimes = makeNoteTimes(locations, transport.tempo);
     sequence.currentIndex = 0;
-    sequence.nextNoteTime = context.currentTime + sequence.noteTimes[0];
+    sequence.nextNoteTime = (context.currentTime * 1000) + sequence.noteTimes[0];
     return sequence;
 }
 
 // Unsure why xLength is 1025 and not 1028?
 drawGrid(0, 0, 1025, 512, 16, 32, "#a4c3b5");
 
-var seq1 = makeSequence([1, 1, 1, 2, 2, 2], "blue");
-var seq1 = makeSequence([9, 9, 8, 8, 9, 8], "green");
+// CONVERT ALL WEB AUDIO TO SECONDS, OOOOPS
+// MAKE A DAMN POINT CLASS
+var seq1 = makeSequence([1, 1, 1, 5, 5, 5, 3, 3, 5, 1], "blue");
+var seq2 = makeSequence([8, 8, 10, 12, 12, 8], "red");
 transport.sequences.push(seq1);
-console.log(transport);
+transport.sequences.push(seq2);
+
+window.addEventListener('click', function() {
+    context.resume();
+    schedulePlays(context.currentTime);
+}, false);
