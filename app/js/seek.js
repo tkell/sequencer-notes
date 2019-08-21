@@ -84,11 +84,13 @@ function playVisual(circle, timeout) {
     setTimeout(function() {
         circle.fillColor.saturation -= 1.0;
         circle.fillColor.alpha = 1.0;
-    }, timeout)
+    }, timeout * 1000)
 
 }
 
 // audio code from here -----------------------------
+// WebAudio code is in seconds.
+// JavaScript time is in milliseconds
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 var context = new AudioContext();
 
@@ -105,7 +107,7 @@ function playSound(when, buffer, gain) {
 }
 
 function playBeep(when) {
-    var timeInSeconds = when / 1000;
+    var timeInSeconds = when
     var oscillator = context.createOscillator();
     oscillator.type = 'square';
     oscillator.connect(context.destination);
@@ -116,7 +118,7 @@ function playBeep(when) {
 var transport = {
     'tempo':  120,
     'isPlaying': false,
-    'lookAhead': 100, // milliseconds
+    'lookAhead': 0.10, // seconds
     'scheduleInterval': 30, // milliseconds
     'sequences': [],
 }
@@ -129,7 +131,7 @@ function doPlay(sequence, playTime, visualDelay) {
         sequence.numLoops += 1;
     }
 
-    var timeToNextNote = sequence.noteTimes[nextIndex];
+    var timeToNextNote = sequence.noteTimes[sequence.currentIndex];
     playVisual(circle, visualDelay);
     playBeep(playTime);
     sequence.currentIndex = nextIndex;
@@ -139,12 +141,11 @@ function doPlay(sequence, playTime, visualDelay) {
 function schedulePlays(startTime) {
     for (var i = 0; i < transport.sequences.length; i++) {
         var sequence = transport.sequences[i];
-        // play the first note!
+        // play the first note, then all the other notes
         if (sequence.currentIndex === 0 && sequence.numLoops === 0) {
             doPlay(sequence, context.currentTime, sequence.noteTimes[0]);
-        } else if (sequence.absoluteNextNoteTime < context.currentTime * 1000 + transport.lookAhead) {
-            var nextIndex = (sequence.currentIndex + 1) % sequence.numNotes
-            doPlay(sequence, sequence.absoluteNextNoteTime, sequence.noteTimes[nextIndex]);
+        } else if (sequence.absoluteNextNoteTime < context.currentTime + transport.lookAhead) {
+            doPlay(sequence, sequence.absoluteNextNoteTime, sequence.noteTimes[sequence.currentIndex]);
        }
     }
 
@@ -161,7 +162,8 @@ function euclidianDistance(x1, y1, x2, y2) {
 }
 
 function makeNoteTimes(points, tempo) {
-    var sixteenthNote = 60000 / tempo / 4;
+    // In seconds
+    var sixteenthNote = 60 / tempo / 4;
     noteTimes = [];
     for (var i = 0; i < points.length; i+=2) {
         // Last jump
@@ -188,22 +190,17 @@ function makeSequence(locations, color) {
     sequence.noteTimes = makeNoteTimes(locations, transport.tempo);
     sequence.currentIndex = 0;
     sequence.numLoops = 0;
-    sequence.absoluteNextNoteTime = (context.currentTime * 1000);
+    sequence.absoluteNextNoteTime = (context.currentTime);
     return sequence;
 }
 
 // Unsure why xLength is 1025 and not 1028?
 drawGrid(0, 0, 1025, 512, 16, 32, "#a4c3b5");
 
-// CONVERT ALL WEB AUDIO TO SECONDS, OOOOPS
 // MAKE A DAMN POINT CLASS
 // FIGURE OUT HOW TO DO DELETES
 var seq1 = makeSequence([1, 1, 1, 5, 5, 5, 3, 3, 5, 1], "blue");
-var seq2 = makeSequence([8, 8, 10, 12, 12, 8], "red");
 transport.sequences.push(seq1);
-transport.sequences.push(seq2);
-console.log(transport);
-
 
 window.addEventListener('click', function() {
     context.resume();
