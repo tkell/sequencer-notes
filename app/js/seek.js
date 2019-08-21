@@ -121,28 +121,30 @@ var transport = {
     'sequences': [],
 }
 
-// Not using this, but keeping it for reference
-function getNextNoteTime(startTime, sequence) {
-    var loopOffset = sequence.numLoops * sequence.totalTime
-    var nextNote = sequence.getNextTime()
-    return startTime + loopOffset + nextNote
+// Helper function to do playback and visuals
+function doPlay(sequence, playTime, visualDelay) {
+    var circle = sequence.circles[sequence.currentIndex];
+    var nextIndex = (sequence.currentIndex + 1) % sequence.numNotes
+    if (nextIndex === 0) {
+        sequence.numLoops += 1;
+    }
+
+    var timeToNextNote = sequence.noteTimes[nextIndex];
+    playVisual(circle, visualDelay);
+    playBeep(playTime);
+    sequence.currentIndex = nextIndex;
+    sequence.absoluteNextNoteTime = sequence.absoluteNextNoteTime += timeToNextNote
 }
 
 function schedulePlays(startTime) {
     for (var i = 0; i < transport.sequences.length; i++) {
         var sequence = transport.sequences[i];
-        // PLAYING FROM 1, NOT 0, NEED TO FIX, GONNA HACK THE VIS FOR NOW
-        console.log("currentIndex", sequence.currentIndex)
-        if (sequence.nextNoteTime < context.currentTime * 1000 + transport.lookAhead) {
-            // gotta somehow sneak the visual updates in here too
+        // play the first note!
+        if (sequence.currentIndex === 0 && sequence.numLoops === 0) {
+            doPlay(sequence, context.currentTime, sequence.noteTimes[0]);
+        } else if (sequence.absoluteNextNoteTime < context.currentTime * 1000 + transport.lookAhead) {
             var nextIndex = (sequence.currentIndex + 1) % sequence.numNotes
-            var circle = sequence.circles[nextIndex]; // should be currentIndex, see comment re: hack
-            var timeToNextNote = sequence.noteTimes[nextIndex];
-            playVisual(circle, timeToNextNote);
-            playBeep(sequence.nextNoteTime);
-            sequence.currentIndex = nextIndex;
-            // rename sequence.nextNoteTime to indicate that it is absolute time
-            sequence.nextNoteTime = sequence.nextNoteTime += timeToNextNote
+            doPlay(sequence, sequence.absoluteNextNoteTime, sequence.noteTimes[nextIndex]);
        }
     }
 
@@ -185,7 +187,8 @@ function makeSequence(locations, color) {
     sequence.numNotes = locations.length / 2;
     sequence.noteTimes = makeNoteTimes(locations, transport.tempo);
     sequence.currentIndex = 0;
-    sequence.nextNoteTime = (context.currentTime * 1000) + sequence.noteTimes[0];
+    sequence.numLoops = 0;
+    sequence.absoluteNextNoteTime = (context.currentTime * 1000);
     return sequence;
 }
 
@@ -194,10 +197,13 @@ drawGrid(0, 0, 1025, 512, 16, 32, "#a4c3b5");
 
 // CONVERT ALL WEB AUDIO TO SECONDS, OOOOPS
 // MAKE A DAMN POINT CLASS
+// FIGURE OUT HOW TO DO DELETES
 var seq1 = makeSequence([1, 1, 1, 5, 5, 5, 3, 3, 5, 1], "blue");
 var seq2 = makeSequence([8, 8, 10, 12, 12, 8], "red");
 transport.sequences.push(seq1);
 transport.sequences.push(seq2);
+console.log(transport);
+
 
 window.addEventListener('click', function() {
     context.resume();
