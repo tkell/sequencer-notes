@@ -94,6 +94,22 @@ function playVisual(circle, timeout) {
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 var context = new AudioContext();
 
+function togglePlay(event) {
+    if (event.keyCode === 32) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (transport.isPlaying === false) {
+            transport.isPlaying = true
+            schedulePlays();
+        } else {
+            for (var i = 0; i < transport.sequences.length; i++) {
+                transport.sequences[i].hasStarted = false;
+            }
+            transport.isPlaying = false;
+        }
+    }
+}
+
 // Raw, strongly-timed WebAudio playback
 function playSound(when, buffer, gain) {
     var source = context.createBufferSource()
@@ -138,12 +154,17 @@ function doPlay(sequence, playTime, visualDelay) {
     sequence.absoluteNextNoteTime = sequence.absoluteNextNoteTime += timeToNextNote
 }
 
-function schedulePlays(startTime) {
+function schedulePlays() {
+    if (transport.isPlaying === false) {
+        return;
+    }
     for (var i = 0; i < transport.sequences.length; i++) {
         var sequence = transport.sequences[i];
         // play the first note, then all the other notes
-        if (sequence.currentIndex === 0 && sequence.numLoops === 0) {
-            doPlay(sequence, context.currentTime, sequence.noteTimes[0]);
+        if (sequence.hasStarted === false) {
+            sequence.absoluteNextNoteTime = context.currentTime;
+            doPlay(sequence, context.currentTime, sequence.noteTimes[sequence.currentIndex]);
+            sequence.hasStarted = true;
         } else if (sequence.absoluteNextNoteTime < context.currentTime + transport.lookAhead) {
             doPlay(sequence, sequence.absoluteNextNoteTime, sequence.noteTimes[sequence.currentIndex]);
        }
@@ -152,7 +173,7 @@ function schedulePlays(startTime) {
     // Once all notes for all sequencers in this range are added,
     // schedule the next call
     setTimeout(function() {
-        schedulePlays(startTime)
+        schedulePlays()
     }, transport.scheduleInterval)
 }
 
@@ -190,19 +211,82 @@ function makeSequence(locations, color) {
     sequence.noteTimes = makeNoteTimes(locations, transport.tempo);
     sequence.currentIndex = 0;
     sequence.numLoops = 0;
+    sequence.hasStarted = false;
     sequence.absoluteNextNoteTime = (context.currentTime);
     return sequence;
 }
 
+function deleteSequence(transport, index) {
+    var circles = transport.sequences[index].circles;
+    for (var i = 0; i < circles.length; i++) {
+        circles[i].remove();
+    }
+    var lines = transport.sequences[index].lines;
+    for (var i = 0; i < lines.length; i++) {
+        lines[i].remove();
+    }
+    transport.sequences.splice(index, 1);
+}
+
+
+// Setup code from here --------------------------------------
+
+function parseInput(inputString) {
+    // trim whitespace
+    var inputString = inputString.replace(/(^\s+|\s+$)/g,'');
+    var re = /^(\d+,\d+-)+$/
+    var match = inputString.match(re);
+    console.log(re, inputString, match);
+    if (match) {
+        var pairs = inputString.split("-")
+        if (pairs.length < 2) {
+            return [];
+        }
+        var output = [];
+        // hacky due to there being a trailing pair
+        for (var i = 0; i < pairs.length - 1; i++) {
+            var pair = pairs[i];
+            var digits = pair.split(",");
+            output.push(digits[0]);
+            output.push(digits[1]);
+        }
+        return output;
+    } else {
+        return []
+    }
+}
+
+function processInput(event) {
+    // Ignore spaces here
+    if (event.keyCode === 32) {
+        event.preventDefault();
+        return;
+    }
+    if (event.keyCode === 13) {
+        event.preventDefault();
+        event.stopPropagation();
+        var inputString = event.target.value;
+        var inputList = parseInput(inputString);
+        console.log(inputList);
+        if (inputList.length > 0) {
+            var seq = makeSequence(inputList, "blue");
+            transport.sequences.push(seq);
+        }
+    }
+}
+var input1 = document.getElementById("input1");
+input1.onkeypress = processInput
+
+window.onkeypress = togglePlay;
+
 // Unsure why xLength is 1025 and not 1028?
 drawGrid(0, 0, 1025, 512, 16, 32, "#a4c3b5");
 
-// MAKE A DAMN POINT CLASS
-// FIGURE OUT HOW TO DO DELETES
-var seq1 = makeSequence([1, 1, 1, 5, 5, 5, 3, 3, 5, 1], "blue");
-transport.sequences.push(seq1);
-
 window.addEventListener('click', function() {
-    context.resume();
-    schedulePlays(context.currentTime);
+    if (context.state !== 'running') {
+        console.log('Audio Context on.')
+        context.resume();
+    }
 }, false);
+
+// deleteSequence(transport, 1);
