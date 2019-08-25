@@ -153,6 +153,7 @@ var transport = {
     "lookAhead": 0.10, // seconds
     "scheduleInterval": 30, // milliseconds
     "sequences": [],
+    "colors": ["#453c7c", "#9acea1", "#daf2fd", "#34f7b1", "#f7347a"]
 }
 
 // Helper function to do playback and visuals
@@ -292,7 +293,8 @@ function processInput(event) {
         var inputList = parseInput(inputString);
         if (inputList.length > 0) {
             var buffer = transport.sequences[seqIndex].buffer;
-            var seq = makeSequence(inputList, "blue");
+            var color = transport.colors[seqIndex];
+            var seq = makeSequence(inputList, color);
             seq.buffer = buffer;
             transport.sequences[seqIndex] = seq;
         }
