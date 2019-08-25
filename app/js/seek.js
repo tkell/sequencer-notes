@@ -240,12 +240,17 @@ function makeSequence(locations, color) {
 
 function deleteSequence(index) {
     var circles = transport.sequences[index].circles;
-    for (var i = 0; i < circles.length; i++) {
-        circles[i].remove();
-    }
     var lines = transport.sequences[index].lines;
-    for (var i = 0; i < lines.length; i++) {
-        lines[i].remove();
+
+    if (circles) {
+        for (var i = 0; i < circles.length; i++) {
+            circles[i].remove();
+        }
+    }
+    if (lines) {
+        for (var i = 0; i < lines.length; i++) {
+            lines[i].remove();
+        }
     }
     var buffer = transport.sequences[index].buffer;
     transport.sequences[index] = {buffer: buffer};
@@ -294,6 +299,7 @@ function processInput(event) {
         if (inputList.length > 0) {
             var buffer = transport.sequences[seqIndex].buffer;
             var color = transport.colors[seqIndex];
+            deleteSequence(seqIndex);
             var seq = makeSequence(inputList, color);
             seq.buffer = buffer;
             transport.sequences[seqIndex] = seq;
