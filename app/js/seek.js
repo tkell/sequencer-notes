@@ -93,6 +93,22 @@ function playVisual(circle, timeout) {
 // JavaScript time is in milliseconds
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 var context = new AudioContext();
+var audioUrls = ["kick.mp3", "snare.mp3", "hihat.mp3", "rim.wav", "cowbell.mp3"];
+
+function loadAudio(url, sequence) {
+    var request = new XMLHttpRequest();
+    request.open('GET', url, true);
+    request.responseType = 'arraybuffer';
+
+    request.onload = function() {
+        context.decodeAudioData(request.response, function(buffer) {
+            sequence.buffer = buffer;
+        }, function() {
+            console.log("Audio did not load!");
+        });
+    }
+    request.send();
+}
 
 function togglePlay(event) {
     if (event.keyCode === 32) {
@@ -132,11 +148,11 @@ function playBeep(when) {
 }
 
 var transport = {
-    'tempo':  120,
-    'isPlaying': false,
-    'lookAhead': 0.10, // seconds
-    'scheduleInterval': 30, // milliseconds
-    'sequences': [],
+    "tempo":  120,
+    "isPlaying": false,
+    "lookAhead": 0.10, // seconds
+    "scheduleInterval": 30, // milliseconds
+    "sequences": [],
 }
 
 // Helper function to do playback and visuals
@@ -149,7 +165,9 @@ function doPlay(sequence, playTime, visualDelay) {
 
     var timeToNextNote = sequence.noteTimes[sequence.currentIndex];
     playVisual(circle, visualDelay);
-    playBeep(playTime);
+    // playBeep(playTime);
+    playSound(playTime, sequence.buffer, 0.8);
+    console.log(sequence.buffer);
     sequence.currentIndex = nextIndex;
     sequence.absoluteNextNoteTime = sequence.absoluteNextNoteTime += timeToNextNote
 }
@@ -228,7 +246,8 @@ function deleteSequence(index) {
     for (var i = 0; i < lines.length; i++) {
         lines[i].remove();
     }
-    transport.sequences[index] = {};
+    var buffer = transport.sequences[index].buffer;
+    transport.sequences[index] = {buffer: buffer};
 }
 
 // Setup code from here --------------------------------------
@@ -272,7 +291,9 @@ function processInput(event) {
         var inputString = event.target.value;
         var inputList = parseInput(inputString);
         if (inputList.length > 0) {
+            var buffer = transport.sequences[seqIndex].buffer;
             var seq = makeSequence(inputList, "blue");
+            seq.buffer = buffer;
             transport.sequences[seqIndex] = seq;
         }
     }
@@ -286,6 +307,8 @@ var inputs = document.getElementsByClassName("seqInput");
 for (var i = 0; i < inputs.length; i++) {
     inputs[i].onkeypress = processInput
     transport.sequences[i] = {};
+    var url = "audio/" + audioUrls[i];
+    loadAudio(url, transport.sequences[i]);
 }
 
 window.onkeypress = togglePlay;

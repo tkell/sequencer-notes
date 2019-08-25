@@ -6,18 +6,23 @@
 </script>
 </head>
 <body>
+  <center>
   <canvas id="seekCanvas" width="1028" height="512"></canvas>
   <br />
   <hr />
   <textarea class="seqInput" data-seq-index="0" rows="1" cols="168"></textarea>
   <textarea class="seqInput" data-seq-index="1" rows="1" cols="168"></textarea>
+  <textarea class="seqInput" data-seq-index="2" rows="1" cols="168"></textarea>
+  <textarea class="seqInput" data-seq-index="3" rows="1" cols="168"></textarea>
+  <textarea class="seqInput" data-seq-index="4" rows="1" cols="168"></textarea>
   <br />
   <hr />
-  :::: click to turn on audio
+  :::: click to turn on audio :::
   <br />
-  :::: `4,4;4,8;9,4;`, for example, to make a sequence
+  :::: `4,4;4,8;9,4;`, for example, to make a sequence ::::
   <br />
-  :::: space to play, only BEEPs for now
+  :::: space to play, shift-x to delete, no volume control yet ::::
+  </center>
 </body>
 <script type="text/paperscript" src="js/seek.js" canvas="seekCanvas">
 </html>
