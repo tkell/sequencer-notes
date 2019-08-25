@@ -160,6 +160,9 @@ function schedulePlays() {
     }
     for (var i = 0; i < transport.sequences.length; i++) {
         var sequence = transport.sequences[i];
+        if (sequence.currentIndex === undefined) {
+            continue;
+        }
         // play the first note, then all the other notes
         if (sequence.hasStarted === false) {
             sequence.absoluteNextNoteTime = context.currentTime;
@@ -216,7 +219,7 @@ function makeSequence(locations, color) {
     return sequence;
 }
 
-function deleteSequence(transport, index) {
+function deleteSequence(index) {
     var circles = transport.sequences[index].circles;
     for (var i = 0; i < circles.length; i++) {
         circles[i].remove();
@@ -225,20 +228,20 @@ function deleteSequence(transport, index) {
     for (var i = 0; i < lines.length; i++) {
         lines[i].remove();
     }
-    transport.sequences.splice(index, 1);
+    transport.sequences[index] = {};
 }
-
 
 // Setup code from here --------------------------------------
 
 function parseInput(inputString) {
     // trim whitespace
     var inputString = inputString.replace(/(^\s+|\s+$)/g,'');
-    var re = /^(\d+,\d+-)+$/
+    var re = /^(\d+,\d+;)+$/
     var match = inputString.match(re);
+    // Does the regex match?
     console.log(re, inputString, match);
     if (match) {
-        var pairs = inputString.split("-")
+        var pairs = inputString.split(";")
         if (pairs.length < 2) {
             return [];
         }
@@ -257,6 +260,7 @@ function parseInput(inputString) {
 }
 
 function processInput(event) {
+    var seqIndex = parseInt(event.target.dataset.seqIndex);
     // Ignore spaces here
     if (event.keyCode === 32) {
         event.preventDefault();
@@ -267,15 +271,22 @@ function processInput(event) {
         event.stopPropagation();
         var inputString = event.target.value;
         var inputList = parseInput(inputString);
-        console.log(inputList);
         if (inputList.length > 0) {
             var seq = makeSequence(inputList, "blue");
-            transport.sequences.push(seq);
+            transport.sequences[seqIndex] = seq;
         }
     }
+    else if (event.keyCode === 88) {
+        event.preventDefault();
+        deleteSequence(seqIndex);
+        event.target.value = "";
+    }
 }
-var input1 = document.getElementById("input1");
-input1.onkeypress = processInput
+var inputs = document.getElementsByClassName("seqInput");
+for (var i = 0; i < inputs.length; i++) {
+    inputs[i].onkeypress = processInput
+    transport.sequences[i] = {};
+}
 
 window.onkeypress = togglePlay;
 
@@ -288,5 +299,3 @@ window.addEventListener('click', function() {
         context.resume();
     }
 }, false);
-
-// deleteSequence(transport, 1);
