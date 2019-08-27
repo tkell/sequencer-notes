@@ -130,7 +130,6 @@ function togglePlay(event) {
 
 // Raw, strongly-timed WebAudio playback
 function playSound(when, buffer, gain) {
-    console.log(gain);
     var source = context.createBufferSource()
     source.buffer = buffer
     var gainNode = context.createGain();
@@ -139,6 +138,16 @@ function playSound(when, buffer, gain) {
     gainNode.connect(context.destination);
     source.start(when)
     return source
+}
+
+function playMidi(when, note, channel, gain) {
+    // when is absolute web audio time in seconds, started on first click
+    // webMidi time is in milliseconds, started on page load.
+    // we need to play at when in midi-time
+    // so we get the difference in ms, and add that to when
+    var timeOffset = WebMidi.time - (context.currentTime * 1000)
+    var midiTimeInMs = when * 1000 + timeOffset;
+    midiOutput.playNote(note, 1, {time: midiTimeInMs, duration: 100, velocity: gain}); // milliseconds
 }
 
 function playBeep(when) {
@@ -156,7 +165,8 @@ var transport = {
     "lookAhead": 0.10, // seconds
     "scheduleInterval": 30, // milliseconds
     "sequences": [],
-    "colors": ["#453c7c", "#9acea1", "#daf2fd", "#34f7b1", "#f7347a"]
+    "colors": ["#453c7c", "#9acea1", "#daf2fd", "#34f7b1", "#f7347a"],
+    "notes": ["C3", "D3", "E3", "F3", "G3"],
 }
 
 // Helper function to do playback and visuals
@@ -170,6 +180,7 @@ function doPlay(sequence, playTime, visualDelay) {
     var timeToNextNote = sequence.noteTimes[sequence.currentIndex];
     playVisual(circle, visualDelay);
     playSound(playTime, sequence.buffer, sequence.gain);
+    playMidi(playTime, sequence.note, 1, sequence.gain);
     sequence.currentIndex = nextIndex;
     sequence.absoluteNextNoteTime = sequence.absoluteNextNoteTime += timeToNextNote
 }
@@ -199,6 +210,22 @@ function schedulePlays() {
         schedulePlays()
     }, transport.scheduleInterval)
 }
+
+
+// WebMidi functions from here -------------------------------
+var midiOutput = null;
+WebMidi.enable(function (err) {
+    if (err) {
+        console.log("WebMidi could not be enabled.", err);
+    } else {
+        if (WebMidi.outputs.length > 0) {
+            console.log("WebMidi enabled!");
+            var midiSpan = document.getElementById("midi");
+            midiOutput = WebMidi.outputs[0];
+            midiSpan.textContent = midiOutput.name;
+        }
+    }
+});
 
 // Sequencer functions from here ---------------------------------------
 function euclidianDistance(x1, y1, x2, y2) {
@@ -304,8 +331,10 @@ function processInput(event) {
             var color = transport.colors[seqIndex];
             deleteSequence(seqIndex);
             var seq = makeSequence(inputList, color);
+            // fix alllll thisss
             seq.buffer = buffer;
             seq.gain = gain;
+            seq.note = transport.notes[seqIndex];
             transport.sequences[seqIndex] = seq;
         }
     }

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<!-- Load the Paper.js library -->
 <script type="text/javascript" src="js/paper-full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/webmidi@2.0.0"></script>
 </script>
 </head>
 <body>
@@ -24,6 +24,8 @@
   :::: space to play ::::
   <br />
   :::: per-pattern - shift-x to delete, f for volume up, v for volume down ::::
+  <br />
+  :::: midi? <span id="midi">nope</span> ::::
   </center>
 </body>
 <script type="text/paperscript" src="js/seek.js" canvas="seekCanvas">
