@@ -145,9 +145,12 @@ function playMidi(when, note, channel, gain) {
     // webMidi time is in milliseconds, started on page load.
     // we need to play at when in midi-time
     // so we get the difference in ms, and add that to when
-    var timeOffset = WebMidi.time - (context.currentTime * 1000)
-    var midiTimeInMs = when * 1000 + timeOffset;
-    midiOutput.playNote(note, 1, {time: midiTimeInMs, duration: 100, velocity: gain}); // milliseconds
+    if (midiOutput) {
+        var timeOffset = WebMidi.time - (context.currentTime * 1000)
+        var midiTimeInMs = when * 1000 + timeOffset;
+        // milliseconds
+        midiOutput.playNote(note, 1, {time: midiTimeInMs, duration: 100, velocity: gain});
+    }
 }
 
 function playBeep(when) {
