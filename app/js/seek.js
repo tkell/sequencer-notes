@@ -102,7 +102,9 @@ function loadAudio(url, sequence) {
 
     request.onload = function() {
         context.decodeAudioData(request.response, function(buffer) {
+            // Clean this up!
             sequence.buffer = buffer;
+            sequence.gain = 0.8;
         }, function() {
             console.log("Audio did not load!");
         });
@@ -128,6 +130,7 @@ function togglePlay(event) {
 
 // Raw, strongly-timed WebAudio playback
 function playSound(when, buffer, gain) {
+    console.log(gain);
     var source = context.createBufferSource()
     source.buffer = buffer
     var gainNode = context.createGain();
@@ -166,9 +169,7 @@ function doPlay(sequence, playTime, visualDelay) {
 
     var timeToNextNote = sequence.noteTimes[sequence.currentIndex];
     playVisual(circle, visualDelay);
-    // playBeep(playTime);
-    playSound(playTime, sequence.buffer, 0.8);
-    console.log(sequence.buffer);
+    playSound(playTime, sequence.buffer, sequence.gain);
     sequence.currentIndex = nextIndex;
     sequence.absoluteNextNoteTime = sequence.absoluteNextNoteTime += timeToNextNote
 }
@@ -286,11 +287,12 @@ function parseInput(inputString) {
 
 function processInput(event) {
     var seqIndex = parseInt(event.target.dataset.seqIndex);
-    // Ignore spaces here
+    // Ignore spaces
     if (event.keyCode === 32) {
         event.preventDefault();
         return;
     }
+    // Enter:  update sequences
     if (event.keyCode === 13) {
         event.preventDefault();
         event.stopPropagation();
@@ -298,17 +300,34 @@ function processInput(event) {
         var inputList = parseInput(inputString);
         if (inputList.length > 0) {
             var buffer = transport.sequences[seqIndex].buffer;
+            var gain = transport.sequences[seqIndex].gain;
             var color = transport.colors[seqIndex];
             deleteSequence(seqIndex);
             var seq = makeSequence(inputList, color);
             seq.buffer = buffer;
+            seq.gain = gain;
             transport.sequences[seqIndex] = seq;
         }
     }
+    // shift-x:  delete sequence
     else if (event.keyCode === 88) {
         event.preventDefault();
         deleteSequence(seqIndex);
         event.target.value = "";
+    }
+    // f:  volume up
+    else if (event.keyCode === 102) {
+        event.preventDefault();
+        if (sequence.gain < 1.01) {
+            sequence.gain = sequence.gain + 0.1;
+        }
+    }
+    // v:  volume down
+    else if (event.keyCode === 118) {
+        event.preventDefault();
+        if (sequence.gain > 0.01) {
+            sequence.gain = sequence.gain - 0.1;
+        }
     }
 }
 var inputs = document.getElementsByClassName("seqInput");
