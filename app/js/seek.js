@@ -317,6 +317,7 @@ function parseInput(inputString) {
 
 function processInput(event) {
     var seqIndex = parseInt(event.target.dataset.seqIndex);
+    var sequence = transport.sequences[seqIndex];
     // Ignore spaces
     if (event.keyCode === 32) {
         event.preventDefault();
@@ -329,16 +330,16 @@ function processInput(event) {
         var inputString = event.target.value;
         var inputList = parseInput(inputString);
         if (inputList.length > 0) {
-            var buffer = transport.sequences[seqIndex].buffer;
-            var gain = transport.sequences[seqIndex].gain;
+            var buffer = sequence.buffer;
+            var gain = sequence.gain;
             var color = transport.colors[seqIndex];
             deleteSequence(seqIndex);
-            var seq = makeSequence(inputList, color);
+            var newSequence = makeSequence(inputList, color);
             // fix alllll thisss
-            seq.buffer = buffer;
-            seq.gain = gain;
-            seq.note = transport.notes[seqIndex];
-            transport.sequences[seqIndex] = seq;
+            newSequence.buffer = buffer;
+            newSequence.gain = gain;
+            newSequence.note = transport.notes[seqIndex];
+            transport.sequences[seqIndex] = newSequence;
         }
     }
     // shift-x:  delete sequence
