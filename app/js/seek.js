@@ -362,16 +362,47 @@ function processInput(event) {
             sequence.gain = sequence.gain - 0.1;
         }
     }
-    // r: sketching out a zoom / focus function
-    else if (event.keyCode === 114) {
+    // m: minimize 
+    else if (event.keyCode === 109) {
         event.preventDefault();
-        var textArea = document.getElementById("seq1");
-        textArea.style.cssText = "position: absolute; top: 80px; opacity: 0.5; font-size: 48px;"; 
+        var id = "seq" + (seqIndex + 1);
+        var textArea = document.getElementById(id);
+        textArea.style.cssText = "";
+    }
+    //
+    // shift-m: maximize 
+    else if (event.keyCode === 77) {
+        event.preventDefault();
+        var id = "seq" + (seqIndex + 1);
+        var topDistance = (seqIndex + 1) * 80;
+        var textArea = document.getElementById(id);
+        textArea.style.cssText = "position: fixed; top: "+ topDistance + "px; margin-left: -512px; width: 1028px; opacity: 0.5; font-size: 48px;"; 
     }
 }
+
+function zoomIn(event) {
+    var seqIndex = parseInt(event.target.dataset.seqIndex);
+    var sequence = transport.sequences[seqIndex];
+    var id = "seq" + (seqIndex + 1);
+    var topDistance = (seqIndex + 1) * 80;
+    var textArea = document.getElementById(id);
+    textArea.style.cssText = "position: fixed; top: "+ topDistance + "px; margin-left: -512px; width: 1028px; opacity: 0.5; font-size: 48px;"; 
+}
+
+function zoomOut(event) {
+    var seqIndex = parseInt(event.target.dataset.seqIndex);
+    var sequence = transport.sequences[seqIndex];
+    var id = "seq" + (seqIndex + 1);
+    var textArea = document.getElementById(id);
+    textArea.style.cssText = "";
+}
+
 var inputs = document.getElementsByClassName("seqInput");
 for (var i = 0; i < inputs.length; i++) {
-    inputs[i].onkeypress = processInput
+    var input = inputs[i];
+    input.onkeypress = processInput;
+    input.onfocus = zoomIn;
+    input.onblur = zoomOut;
     transport.sequences[i] = {};
     var url = "audio/" + audioUrls[i];
     loadAudio(url, transport.sequences[i]);
