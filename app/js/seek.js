@@ -362,6 +362,12 @@ function processInput(event) {
             sequence.gain = sequence.gain - 0.1;
         }
     }
+    // r: sketching out a zoom / focus function
+    else if (event.keyCode === 114) {
+        event.preventDefault();
+        var textArea = document.getElementById("seq1");
+        textArea.style.cssText = "position: absolute; top: 80px; opacity: 0.5; font-size: 48px;"; 
+    }
 }
 var inputs = document.getElementsByClassName("seqInput");
 for (var i = 0; i < inputs.length; i++) {

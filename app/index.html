@@ -1,32 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script type="text/javascript" src="js/paper-full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/webmidi@2.0.0"></script>
-</script>
+  <link rel="stylesheet" type="text/css" href="main.css">
+  <script type="text/javascript" src="js/paper-full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/webmidi@2.0.0"></script>
 </head>
 <body>
-  <center>
   <canvas id="seekCanvas" width="1028" height="512"></canvas>
   <br />
   <hr />
-  <textarea class="seqInput" data-seq-index="0" rows="1" cols="168"></textarea>
-  <textarea class="seqInput" data-seq-index="1" rows="1" cols="168"></textarea>
-  <textarea class="seqInput" data-seq-index="2" rows="1" cols="168"></textarea>
-  <textarea class="seqInput" data-seq-index="3" rows="1" cols="168"></textarea>
-  <textarea class="seqInput" data-seq-index="4" rows="1" cols="168"></textarea>
-  <br />
+  <textarea class="seqInput" id="seq1" data-seq-index="0" rows="1" cols="100"></textarea><br />
+  <textarea class="seqInput" data-seq-index="1" rows="1" cols="100"></textarea><br />
+  <textarea class="seqInput" data-seq-index="2" rows="1" cols="100"></textarea><br />
+  <textarea class="seqInput" data-seq-index="3" rows="1" cols="100"></textarea><br />
+  <textarea class="seqInput" data-seq-index="4" rows="1" cols="100"></textarea><br />
   <hr />
-  :::: click to turn on audio :::
+  :: click to turn on audio ::
   <br />
-  :::: `4,4;4,8;9,4;`, for example, to make a sequence ::::
+  :: `4,4;4,8;9,4;`, for example, to make a sequence ::
   <br />
-  :::: space to play ::::
+  :: space to play ::
   <br />
-  :::: per-pattern - shift-x to delete, f for volume up, v for volume down ::::
+  :: per-pattern - shift-x to delete, f for volume up, v for volume down ::
   <br />
-  :::: midi? <span id="midi">nope</span> ::::
-  </center>
+  :: midi? <span id="midi">nope</span> ::
 </body>
 <script type="text/paperscript" src="js/seek.js" canvas="seekCanvas">
 </html>
