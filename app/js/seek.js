@@ -183,7 +183,7 @@ function doPlay(sequence, playTime, visualDelay) {
     var timeToNextNote = sequence.noteTimes[sequence.currentIndex];
     playVisual(circle, visualDelay);
     playSound(playTime, sequence.buffer, sequence.gain);
-    playMidi(playTime, sequence.note, 1, sequence.gain);
+    playMidi(playTime, sequence.midiNote, 1, sequence.gain);
     sequence.currentIndex = nextIndex;
     sequence.absoluteNextNoteTime = sequence.absoluteNextNoteTime += timeToNextNote
 }
@@ -258,7 +258,7 @@ function makeNoteTimes(points, tempo) {
     return noteTimes;
 }
 
-function makeSequence(locations, color) {
+function makeSequence(locations, color, midiNote, buffer, gain) {
     var sequence = drawSequence(locations, color);
     sequence.numNotes = locations.length / 2;
     sequence.noteTimes = makeNoteTimes(locations, transport.tempo);
@@ -266,6 +266,9 @@ function makeSequence(locations, color) {
     sequence.numLoops = 0;
     sequence.hasStarted = false;
     sequence.absoluteNextNoteTime = (context.currentTime);
+    sequence.midiNote = midiNote;
+    sequence.buffer = buffer;
+    sequence.gain = gain;
     return sequence;
 }
 
@@ -333,12 +336,9 @@ function processInput(event) {
             var buffer = sequence.buffer;
             var gain = sequence.gain;
             var color = transport.colors[seqIndex];
+            var midiNote = transport.notes[seqIndex];
             deleteSequence(seqIndex);
-            var newSequence = makeSequence(inputList, color);
-            // fix alllll thisss
-            newSequence.buffer = buffer;
-            newSequence.gain = gain;
-            newSequence.note = transport.notes[seqIndex];
+            var newSequence = makeSequence(inputList, color, midiNote, buffer, gain);
             transport.sequences[seqIndex] = newSequence;
         }
     }
