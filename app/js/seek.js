@@ -168,7 +168,7 @@ var transport = {
     "lookAhead": 0.10, // seconds
     "scheduleInterval": 30, // milliseconds
     "sequences": [],
-    "colors": ["#453c7c", "#9acea1", "#daf2fd", "#34f7b1", "#f7347a"],
+    "colors": ["#453c7c", "#9acea1", "#aab2ff", "#34f7b1", "#f7347a"],
     "notes": ["C3", "D3", "E3", "F3", "G3"],
 }
 
@@ -365,36 +365,40 @@ function processInput(event) {
     // m: minimize 
     else if (event.keyCode === 109) {
         event.preventDefault();
-        var id = "seq" + (seqIndex + 1);
-        var textArea = document.getElementById(id);
-        textArea.style.cssText = "";
+        zoomOutCss(seqIndex);
     }
-    //
     // shift-m: maximize 
     else if (event.keyCode === 77) {
         event.preventDefault();
-        var id = "seq" + (seqIndex + 1);
-        var topDistance = (seqIndex + 1) * 80;
-        var textArea = document.getElementById(id);
-        textArea.style.cssText = "position: fixed; top: "+ topDistance + "px; margin-left: -512px; width: 1028px; opacity: 0.5; font-size: 48px;"; 
+        zoomInCss(seqIndex);
     }
+}
+
+function zoomInCss(seqIndex) {
+    var id = "seq" + (seqIndex + 1);
+    var topDistance = (seqIndex + 1) * 80;
+    var textArea = document.getElementById(id);
+    textArea.classList.remove('seqInput');
+    textArea.classList.add('zoomSeq');
+    textArea.style.top = topDistance + "px";
+}
+
+function zoomOutCss(seqIndex) {
+    var id = "seq" + (seqIndex + 1);
+    var textArea = document.getElementById(id);
+    textArea.classList.remove('zoomSeq');
+    textArea.classList.add('seqInput');
+    textArea.style.top = "";
 }
 
 function zoomIn(event) {
     var seqIndex = parseInt(event.target.dataset.seqIndex);
-    var sequence = transport.sequences[seqIndex];
-    var id = "seq" + (seqIndex + 1);
-    var topDistance = (seqIndex + 1) * 80;
-    var textArea = document.getElementById(id);
-    textArea.style.cssText = "position: fixed; top: "+ topDistance + "px; margin-left: -512px; width: 1028px; opacity: 0.5; font-size: 48px;"; 
+    zoomInCss(seqIndex);
 }
 
 function zoomOut(event) {
     var seqIndex = parseInt(event.target.dataset.seqIndex);
-    var sequence = transport.sequences[seqIndex];
-    var id = "seq" + (seqIndex + 1);
-    var textArea = document.getElementById(id);
-    textArea.style.cssText = "";
+    zoomOutCss(seqIndex);
 }
 
 var inputs = document.getElementsByClassName("seqInput");

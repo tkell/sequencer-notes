@@ -3,3 +3,42 @@ body {
   font-family: monospace;
 }
 
+textarea.seqInput {
+  width: 512px;
+  height: 16px;
+}
+
+textarea.zoomSeq {
+  position: fixed;
+  width: 1028px;
+  margin-left: -512px;
+  height: 64px;
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+textarea#seq1 {
+  color: #453c7c;
+  border: 1px solid #453c7c;
+}
+
+textarea#seq2 {
+  color: #9acea1;
+  border: 1px solid #9acea1;
+}
+
+textarea#seq3 {
+  color: #aab2ff;
+  border: 1px solid #aab2ff;
+}
+
+textarea#seq4 {
+  color: #34f7b1;
+  border: 1px solid #34f7b1;
+}
+
+textarea#seq5 {
+  color: #f7347a;
+  border: 1px solid #f7347a;
+}
+
