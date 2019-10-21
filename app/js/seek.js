@@ -162,6 +162,18 @@ function playBeep(when) {
     oscillator.stop(timeInSeconds + 0.1);
 }
 
+function changeTempo(transport, newTempo) {
+    transport.tempo = newTempo;
+    for (var i = 0; i < transport.sequences.length; i++) {
+        var sequence = transport.sequences[i];
+        if (sequence.locations) {
+            sequence.noteTimes = makeNoteTimes(sequence.locations, transport.tempo);
+        }
+    }
+    var tempoSpan = document.getElementById("tempo");
+    tempoSpan.textContent = transport.tempo;
+}
+
 var transport = {
     "tempo":  120,
     "isPlaying": false,
@@ -261,6 +273,7 @@ function makeNoteTimes(points, tempo) {
 function makeSequence(locations, color, midiNote, buffer, gain) {
     var sequence = drawSequence(locations, color);
     sequence.numNotes = locations.length / 2;
+    sequence.locations = locations;
     sequence.noteTimes = makeNoteTimes(locations, transport.tempo);
     sequence.currentIndex = 0;
     sequence.numLoops = 0;
@@ -371,6 +384,16 @@ function processInput(event) {
     else if (event.keyCode === 77) {
         event.preventDefault();
         zoomInCss(seqIndex);
+    }
+    // +: increase tempo by 1
+    else if (event.keyCode === 43) {
+        event.preventDefault();
+        changeTempo(transport, transport.tempo + 1);
+    }
+    // -: decrease tempo by 1
+    else if (event.keyCode === 45) {
+        event.preventDefault();
+        changeTempo(transport, transport.tempo - 1);
     }
 }
 
