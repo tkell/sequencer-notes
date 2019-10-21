@@ -112,7 +112,8 @@ function loadAudio(url, sequence) {
     request.send();
 }
 
-function togglePlay(event) {
+function processGlobalInput(event) {
+    // space: play / pause
     if (event.keyCode === 32) {
         event.preventDefault();
         event.stopPropagation();
@@ -125,6 +126,18 @@ function togglePlay(event) {
             }
             transport.isPlaying = false;
         }
+    }
+    // +: increase tempo by 1
+    else if (event.keyCode === 43) {
+        event.preventDefault();
+        event.stopPropagation();
+        changeTempo(transport, transport.tempo + 1);
+    }
+    // -: decrease tempo by 1
+    else if (event.keyCode === 45) {
+        event.preventDefault();
+        event.stopPropagation();
+        changeTempo(transport, transport.tempo - 1);
     }
 }
 
@@ -385,16 +398,6 @@ function processInput(event) {
         event.preventDefault();
         zoomInCss(seqIndex);
     }
-    // +: increase tempo by 1
-    else if (event.keyCode === 43) {
-        event.preventDefault();
-        changeTempo(transport, transport.tempo + 1);
-    }
-    // -: decrease tempo by 1
-    else if (event.keyCode === 45) {
-        event.preventDefault();
-        changeTempo(transport, transport.tempo - 1);
-    }
 }
 
 function zoomInCss(seqIndex) {
@@ -435,7 +438,7 @@ for (var i = 0; i < inputs.length; i++) {
     loadAudio(url, transport.sequences[i]);
 }
 
-window.onkeypress = togglePlay;
+window.onkeypress = processGlobalInput;
 
 // Unsure why xLength is 1025 and not 1028?
 drawGrid(0, 0, 1025, 512, 16, 32, "#a4c3b5");
