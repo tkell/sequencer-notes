@@ -42,3 +42,7 @@ textarea#seq5 {
   border: 1px solid #f7347a;
 }
 
+span.midiNote {
+  margin: 2px;
+}
+

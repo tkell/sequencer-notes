@@ -112,34 +112,6 @@ function loadAudio(url, sequence) {
     request.send();
 }
 
-function processGlobalInput(event) {
-    // space: play / pause
-    if (event.keyCode === 32) {
-        event.preventDefault();
-        event.stopPropagation();
-        if (transport.isPlaying === false) {
-            transport.isPlaying = true
-            schedulePlays();
-        } else {
-            for (var i = 0; i < transport.sequences.length; i++) {
-                transport.sequences[i].hasStarted = false;
-            }
-            transport.isPlaying = false;
-        }
-    }
-    // +: increase tempo by 1
-    else if (event.keyCode === 43) {
-        event.preventDefault();
-        event.stopPropagation();
-        changeTempo(transport, transport.tempo + 1);
-    }
-    // -: decrease tempo by 1
-    else if (event.keyCode === 45) {
-        event.preventDefault();
-        event.stopPropagation();
-        changeTempo(transport, transport.tempo - 1);
-    }
-}
 
 // Raw, strongly-timed WebAudio playback
 function playSound(when, buffer, gain) {
@@ -194,7 +166,10 @@ var transport = {
     "scheduleInterval": 30, // milliseconds
     "sequences": [],
     "colors": ["#453c7c", "#9acea1", "#aab2ff", "#34f7b1", "#f7347a"],
-    "notes": ["C3", "D3", "E3", "F3", "G3"],
+    "notes": [60, 62, 64, 65, 67],
+    "midiActivated": false,
+    "midiOutputs": [],
+    "midiIndex": 0,
 }
 
 // Helper function to do playback and visuals
@@ -207,8 +182,12 @@ function doPlay(sequence, playTime, visualDelay) {
 
     var timeToNextNote = sequence.noteTimes[sequence.currentIndex];
     playVisual(circle, visualDelay);
-    playSound(playTime, sequence.buffer, sequence.gain);
-    playMidi(playTime, sequence.midiNote, 1, sequence.gain);
+    if (midiOutput) {
+        playMidi(playTime, sequence.midiNote, 1, sequence.gain);
+    }
+    else {
+        playSound(playTime, sequence.buffer, sequence.gain);
+    }
     sequence.currentIndex = nextIndex;
     sequence.absoluteNextNoteTime = sequence.absoluteNextNoteTime += timeToNextNote
 }
@@ -249,8 +228,8 @@ WebMidi.enable(function (err) {
         if (WebMidi.outputs.length > 0) {
             console.log("WebMidi enabled!");
             var midiSpan = document.getElementById("midi");
-            midiOutput = WebMidi.outputs[0];
-            midiSpan.textContent = midiOutput.name;
+            midiSpan.textContent = "enabled, but not activated";
+            transport.midiOuts = WebMidi.outputs;
         }
     }
 });
@@ -341,6 +320,91 @@ function parseInput(inputString) {
         return output;
     } else {
         return []
+    }
+}
+
+// Keypress handlers --------------------------------------
+function displayMidiNotes(transport) {
+    for (var i = 0; i < transport.notes.length; i++) {
+        var idString = "midiNote" + (i + 1);
+        var midiString = transport.notes[i]
+        var midiNoteSpan = document.getElementById(idString);
+        midiNoteSpan.textContent = midiString;
+    }
+}
+
+function hideMidiNotes(transport) {
+    for (var i = 0; i < transport.notes.length; i++) {
+        var idString = "midiNote" + (i + 1);
+        var midiString = "";
+        var midiNoteSpan = document.getElementById(idString);
+        midiNoteSpan.textContent = midiString;
+    }
+}
+
+function processGlobalInput(event) {
+    // space: play / pause
+    if (event.keyCode === 32) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (transport.isPlaying === false) {
+            transport.isPlaying = true
+            schedulePlays();
+        } else {
+            for (var i = 0; i < transport.sequences.length; i++) {
+                transport.sequences[i].hasStarted = false;
+            }
+            transport.isPlaying = false;
+        }
+    }
+    // +: increase tempo by 1
+    else if (event.keyCode === 43) {
+        event.preventDefault();
+        event.stopPropagation();
+        changeTempo(transport, transport.tempo + 1);
+    }
+    // -: decrease tempo by 1
+    else if (event.keyCode === 45) {
+        event.preventDefault();
+        event.stopPropagation();
+        changeTempo(transport, transport.tempo - 1);
+    }
+    // |: Toggle between midi and no midi
+    else if (event.keyCode === 124) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (transport.midiActivated == false) {
+            transport.midiActivated = true;
+            midiOutput = transport.midiOuts[transport.midiIndex];
+            var midiSpan = document.getElementById("midi");
+            midiSpan.textContent = midiOutput.name;
+            displayMidiNotes(transport);
+        }
+        else if (transport.midiActivated == true) {
+            transport.midiActivated = false;
+            midiOutput = null;
+            var midiSpan = document.getElementById("midi");
+            midiSpan.textContent = "midi deactivated"
+            hideMidiNotes(transport);
+        }
+    }
+    // {: Select previous midi out
+    else if (event.keyCode === 123) {
+        if (transport.midiActivated == true) {
+            transport.midiIndex = Math.max(0, transport.midiIndex - 1);
+            midiOutput = transport.midiOuts[transport.midiIndex];
+            var midiSpan = document.getElementById("midi");
+            midiSpan.textContent = midiOutput.name;
+        }
+    }
+    // }: Select next midi out
+    else if (event.keyCode === 125) {
+        if (transport.midiActivated == true) {
+            transport.midiIndex = Math.min(transport.midiOuts.length - 1, transport.midiIndex + 1);
+            midiOutput = transport.midiOuts[transport.midiIndex];
+            var midiSpan = document.getElementById("midi");
+            midiSpan.textContent = midiOutput.name;
+        }
     }
 }
 
