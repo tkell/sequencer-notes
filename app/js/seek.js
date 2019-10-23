@@ -390,6 +390,8 @@ function processGlobalInput(event) {
     }
     // {: Select previous midi out
     else if (event.keyCode === 123) {
+        event.preventDefault();
+        event.stopPropagation();
         if (transport.midiActivated == true) {
             transport.midiIndex = Math.max(0, transport.midiIndex - 1);
             midiOutput = transport.midiOuts[transport.midiIndex];
@@ -399,6 +401,8 @@ function processGlobalInput(event) {
     }
     // }: Select next midi out
     else if (event.keyCode === 125) {
+        event.preventDefault();
+        event.stopPropagation();
         if (transport.midiActivated == true) {
             transport.midiIndex = Math.min(transport.midiOuts.length - 1, transport.midiIndex + 1);
             midiOutput = transport.midiOuts[transport.midiIndex];
@@ -415,6 +419,28 @@ function processInput(event) {
     if (event.keyCode === 32) {
         event.preventDefault();
         return;
+    }
+    // ctrl: raise midi notes
+    if (event.ctrlKey) {
+        if (event.code.indexOf("Digit") == 0) {
+            event.preventDefault();
+            var offset = parseInt(event.code.replace("Digit", ""));
+            transport.notes[seqIndex] += offset
+            sequence.midiNote = transport.notes[seqIndex];
+            displayMidiNotes(transport);
+        }
+        return; // just in case
+    }
+    // alt: lower midi notes
+    if (event.altKey) {
+        if (event.code.indexOf("Digit") == 0) {
+            event.preventDefault();
+            var offset = parseInt(event.code.replace("Digit", ""));
+            transport.notes[seqIndex] -= offset
+            sequence.midiNote = transport.notes[seqIndex];
+            displayMidiNotes(transport);
+        }
+        return; // just in case
     }
     // Enter:  update sequences
     if (event.keyCode === 13) {
