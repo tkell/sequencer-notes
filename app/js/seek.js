@@ -134,7 +134,7 @@ function playMidi(when, note, channel, gain) {
         var timeOffset = WebMidi.time - (context.currentTime * 1000)
         var midiTimeInMs = when * 1000 + timeOffset;
         // milliseconds
-        midiOutput.playNote(note, 1, {time: midiTimeInMs, duration: 100, velocity: gain});
+        midiOutput.playNote(note, channel, {time: midiTimeInMs, duration: 100, velocity: gain});
     }
 }
 
@@ -173,7 +173,7 @@ var transport = {
 }
 
 // Helper function to do playback and visuals
-function doPlay(sequence, playTime, visualDelay) {
+function doPlay(sequence, playTime, visualDelay, midiChannel) {
     var circle = sequence.circles[sequence.currentIndex];
     var nextIndex = (sequence.currentIndex + 1) % sequence.numNotes
     if (nextIndex === 0) {
@@ -183,7 +183,7 @@ function doPlay(sequence, playTime, visualDelay) {
     var timeToNextNote = sequence.noteTimes[sequence.currentIndex];
     playVisual(circle, visualDelay);
     if (midiOutput) {
-        playMidi(playTime, sequence.midiNote, 1, sequence.gain);
+        playMidi(playTime, sequence.midiNote, midiChannel, sequence.gain);
     }
     else {
         playSound(playTime, sequence.buffer, sequence.gain);
@@ -204,10 +204,10 @@ function schedulePlays() {
         // play the first note, then all the other notes
         if (sequence.hasStarted === false) {
             sequence.absoluteNextNoteTime = context.currentTime;
-            doPlay(sequence, context.currentTime, sequence.noteTimes[sequence.currentIndex]);
+            doPlay(sequence, context.currentTime, sequence.noteTimes[sequence.currentIndex], i + 1);
             sequence.hasStarted = true;
         } else if (sequence.absoluteNextNoteTime < context.currentTime + transport.lookAhead) {
-            doPlay(sequence, sequence.absoluteNextNoteTime, sequence.noteTimes[sequence.currentIndex]);
+            doPlay(sequence, sequence.absoluteNextNoteTime, sequence.noteTimes[sequence.currentIndex], i + 1);
        }
     }
 
