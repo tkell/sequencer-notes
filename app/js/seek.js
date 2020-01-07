@@ -544,9 +544,51 @@ function processInput(event) {
         event.preventDefault();
         zoomInCss(seqIndex);
     }
+    // e: expand
+    else if (event.keyCode === 101) {
+        event.preventDefault();
+        var inputList = expandLocations(sequence.locations);
+        // Need to clean this up, (make a damn initSeq pls)
+        // and parse things back into a string so we can fill the 
+        // text area correctly!
+        if (inputList.length > 0) {
+            var buffer = sequence.buffer;
+            var gain = sequence.gain;
+            var color = transport.colors[seqIndex];
+            var midiNote = transport.notes[seqIndex];
+            deleteSequence(seqIndex);
+            var newSequence = makeSequence(inputList, color, midiNote, buffer, gain);
+            transport.sequences[seqIndex] = newSequence;
+        }
+    }
     // fall through to regular input: pulse the grid
     var color = transport.colors[seqIndex];
     inputVisual(color, 0.5);
+}
+
+// Transformers
+function expandLocations(locations) {
+    var xSum = 0;
+    var ySum = 0;
+    for (var i = 0; i < locations.length; i+=2) {
+        xSum += parseInt(locations[i]);
+        ySum += parseInt(locations[i + 1]);
+    }
+    var xCenter = xSum / (locations.length / 2);
+    var yCenter = ySum / (locations.length / 2);
+
+    var newLocations = [];
+    for (var i = 0; i < locations.length; i+=2) {
+        var x = parseInt(locations[i]);
+        var y = parseInt(locations[i + 1]);
+        if (x > xCenter) x++;
+        if (x < xCenter) x--;
+        if (y > yCenter) y++;
+        if (y < yCenter) y--;
+        newLocations.push(x.toString());
+        newLocations.push(y.toString());
+    }
+    return newLocations;
 }
 
 function zoomInCss(seqIndex) {
