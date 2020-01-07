@@ -85,7 +85,14 @@ function playVisual(circle, timeout) {
         circle.fillColor.saturation -= 1.0;
         circle.fillColor.alpha = 1.0;
     }, timeout * 1000)
+}
 
+function entryVisual(xVal, yVal, color) {
+    var lines = [];
+    var yLine = drawGridLine(0, yVal, 32, yVal, color);
+    var xLine = drawGridLine(xVal, 0, xVal, 16, color);
+    lines.push(yLine, xLine);
+    return lines;
 }
 
 // audio code from here -----------------------------
@@ -274,6 +281,8 @@ function makeSequence(locations, color, midiNote, buffer, gain) {
     sequence.midiNote = midiNote;
     sequence.buffer = buffer;
     sequence.gain = gain;
+    sequence.magicSeparator = ",";
+    sequence.startLines = []
     return sequence;
 }
 
@@ -292,7 +301,8 @@ function deleteSequence(index) {
         }
     }
     var buffer = transport.sequences[index].buffer;
-    transport.sequences[index] = {buffer: buffer};
+    var gain = transport.sequences[index].gain;
+    transport.sequences[index] = {buffer: buffer, gain: gain};
 }
 
 // Setup code from here --------------------------------------
@@ -303,7 +313,6 @@ function parseInput(inputString) {
     var re = /^(\d+,\d+;)+$/
     var match = inputString.match(re);
     // Does the regex match?
-    console.log(re, inputString, match);
     if (match) {
         var pairs = inputString.split(";")
         if (pairs.length < 2) {
@@ -412,15 +421,18 @@ function processGlobalInput(event) {
     }
 }
 
-
 function processInput(event) {
     var seqIndex = parseInt(event.target.dataset.seqIndex);
     var sequence = transport.sequences[seqIndex];
 
-    // Backtick: add magic separator
+    // Backtick: add magic separator,
+    // and draw lines
     if (event.keyCode === 96) {
         if (!sequence.magicSeparator) {
             sequence.magicSeparator = ",";
+        }
+        if (!sequence.startLines) {
+            sequence.startLines = [];
         }
         var inputString = event.target.value;
         inputString += sequence.magicSeparator
@@ -431,9 +443,17 @@ function processInput(event) {
         }
         event.target.value = inputString;
         event.preventDefault();
+        // Draw starting lines
+        var color = transport.colors[seqIndex];
+        var pairs = parseInput(inputString);
+        if (pairs.length >= 2) {
+            var x = pairs[pairs.length - 2];
+            var y = pairs[pairs.length - 1];
+            var newLines = entryVisual(x, y, color, 1)
+            sequence.startLines.push.apply(sequence.startLines, newLines);
+        }
         return;
     }
-
     // Ignore spaces
     if (event.keyCode === 32) {
         event.preventDefault();
@@ -468,6 +488,10 @@ function processInput(event) {
         var inputString = event.target.value;
         var inputList = parseInput(inputString);
         if (inputList.length > 0) {
+            for (var i = 0; i < sequence.startLines.length; i++) {
+                var line = sequence.startLines[i];
+                line.remove();
+            }
             var buffer = sequence.buffer;
             var gain = sequence.gain;
             var color = transport.colors[seqIndex];
