@@ -95,6 +95,19 @@ function entryVisual(xVal, yVal, color) {
     return lines;
 }
 
+function inputVisual(color, timeout) {
+    var line1 = drawGridLine(0, 0, 32, 0, color);
+    var line2 = drawGridLine(32, 0, 32, 16, color);
+    var line3 = drawGridLine(32, 16, 0, 16, color);
+    var line4 = drawGridLine(0, 16, 0, 0, color);
+    setTimeout(function() {
+        line1.remove();
+        line2.remove();
+        line3.remove();
+        line4.remove();
+    }, timeout * 1000)
+}
+
 // audio code from here -----------------------------
 // WebAudio code is in seconds.
 // JavaScript time is in milliseconds
@@ -449,7 +462,7 @@ function processInput(event) {
         if (pairs.length >= 2) {
             var x = pairs[pairs.length - 2];
             var y = pairs[pairs.length - 1];
-            var newLines = entryVisual(x, y, color, 1)
+            var newLines = entryVisual(x, y, color)
             sequence.startLines.push.apply(sequence.startLines, newLines);
         }
         return;
@@ -531,6 +544,9 @@ function processInput(event) {
         event.preventDefault();
         zoomInCss(seqIndex);
     }
+    // fall through to regular input: pulse the grid
+    var color = transport.colors[seqIndex];
+    inputVisual(color, 0.5);
 }
 
 function zoomInCss(seqIndex) {
