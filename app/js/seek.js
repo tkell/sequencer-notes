@@ -412,9 +412,28 @@ function processGlobalInput(event) {
     }
 }
 
+
 function processInput(event) {
     var seqIndex = parseInt(event.target.dataset.seqIndex);
     var sequence = transport.sequences[seqIndex];
+
+    // Backtick: add magic separator
+    if (event.keyCode === 96) {
+        if (!sequence.magicSeparator) {
+            sequence.magicSeparator = ",";
+        }
+        var inputString = event.target.value;
+        inputString += sequence.magicSeparator
+        if (sequence.magicSeparator === ",") {
+            sequence.magicSeparator = ";";
+        } else {
+            sequence.magicSeparator = ",";
+        }
+        event.target.value = inputString;
+        event.preventDefault();
+        return;
+    }
+
     // Ignore spaces
     if (event.keyCode === 32) {
         event.preventDefault();
