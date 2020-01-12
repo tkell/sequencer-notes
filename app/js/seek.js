@@ -322,10 +322,9 @@ function deleteSequence(index) {
         }
     }
     transport.sequences[index] = initSequence(
-        transport.sequences[index].buffer;
-        transport.sequences[index].gain;
-        transport.sequences[index].midiNotei
-    );
+        transport.sequences[index].buffer,
+        transport.sequences[index].gain,
+        transport.sequences[index].midiNote);
 }
 
 // Setup code from here --------------------------------------
@@ -558,7 +557,6 @@ function processInput(event) {
     else if (event.keyCode === 101) {
         event.preventDefault();
         var inputList = expandLocations(sequence.locations);
-        // Need to clean this up, (make a damn initSeq pls)
         // and parse things back into a string so we can fill the 
         // text area correctly!
         if (inputList.length > 0) {
@@ -569,11 +567,25 @@ function processInput(event) {
                 sequence.buffer,
                 sequence.gain);
             transport.sequences[seqIndex] = newSequence;
+            var newInputString = createStringFromInputList(inputList);
+            event.target.value = newInputString;
         }
     }
     // fall through to regular input: pulse the grid
     var color = transport.colors[seqIndex];
     inputVisual(color, 0.5);
+}
+
+function createStringFromInputList(inputList) {
+    var pairsList = [];
+    for (var i = 0; i < inputList.length; i+=2) {
+        var pair = [];
+        pair.push(inputList[i]);
+        pair.push(inputList[i + 1]);
+        pairsList.push(pair.join(","));
+    }
+    // Add trailing semicolon
+    return pairsList.join(";") + ";";
 }
 
 // Transformers
