@@ -443,6 +443,34 @@ function processGlobalInput(event) {
     }
 }
 
+function updateSeq(inputList, seqIndex, sequence, event) {
+    if (inputList.length > 0) {
+        deleteSequence(seqIndex);
+        var newSequence = makeSequence(inputList,
+            transport.colors[seqIndex],
+            transport.notes[seqIndex],
+            sequence.buffer,
+            sequence.gain);
+        transport.sequences[seqIndex] = newSequence;
+        var newInputString = createStringFromInputList(inputList);
+        event.target.value = newInputString;
+    }
+}
+
+function runUpdateFunction(seqIndex, event, funcName) {
+    var sequence = transport.sequences[seqIndex];
+    // E:  Expand by 1
+    if (funcName === "E") {
+        var inputList = expandLocations(sequence.locations);
+        updateSeq(inputList, seqIndex, sequence, event);
+    }
+    // e:  Contract by 1
+    if (funcName === "e") {
+        var inputList = contractLocations(sequence.locations);
+        updateSeq(inputList, seqIndex, sequence, event);
+    }
+}
+
 function processInput(event) {
     var seqIndex = parseInt(event.target.dataset.seqIndex);
     var sequence = transport.sequences[seqIndex];
@@ -503,11 +531,18 @@ function processInput(event) {
         }
         return; // just in case
     }
-    // Enter:  update sequences
+    // Enter:  update sequences or run an updating function
     if (event.keyCode === 13) {
         event.preventDefault();
         event.stopPropagation();
         var inputString = event.target.value;
+
+        if (inputString.indexOf('=>') != -1) {
+            var funcName = inputString.split("=>")[1];
+            runUpdateFunction(seqIndex, event, funcName);
+            return;
+        }
+
         var inputList = parseInput(inputString);
         if (inputList.length > 0) {
             for (var i = 0; i < sequence.startLines.length; i++) {
@@ -553,24 +588,6 @@ function processInput(event) {
         event.preventDefault();
         zoomInCss(seqIndex);
     }
-    // e: expand
-    else if (event.keyCode === 101) {
-        event.preventDefault();
-        var inputList = expandLocations(sequence.locations);
-        // and parse things back into a string so we can fill the 
-        // text area correctly!
-        if (inputList.length > 0) {
-            deleteSequence(seqIndex);
-            var newSequence = makeSequence(inputList,
-                transport.colors[seqIndex],
-                transport.notes[seqIndex],
-                sequence.buffer,
-                sequence.gain);
-            transport.sequences[seqIndex] = newSequence;
-            var newInputString = createStringFromInputList(inputList);
-            event.target.value = newInputString;
-        }
-    }
     // fall through to regular input: pulse the grid
     var color = transport.colors[seqIndex];
     inputVisual(color, 0.5);
@@ -588,8 +605,9 @@ function createStringFromInputList(inputList) {
     return pairsList.join(";") + ";";
 }
 
-// Transformers
-function expandLocations(locations) {
+// Transformers and helpers from here
+
+function findCenter(locations) {
     var xSum = 0;
     var ySum = 0;
     for (var i = 0; i < locations.length; i+=2) {
@@ -598,15 +616,35 @@ function expandLocations(locations) {
     }
     var xCenter = xSum / (locations.length / 2);
     var yCenter = ySum / (locations.length / 2);
+    return {x: xCenter, y: yCenter}
+}
 
+function expandLocations(locations) {
+    var center = findCenter(locations);
     var newLocations = [];
     for (var i = 0; i < locations.length; i+=2) {
         var x = parseInt(locations[i]);
         var y = parseInt(locations[i + 1]);
-        if (x > xCenter) x++;
-        if (x < xCenter) x--;
-        if (y > yCenter) y++;
-        if (y < yCenter) y--;
+        if (x > center.x) x++;
+        if (x < center.x) x--;
+        if (y > center.y) y++;
+        if (y < center.y) y--;
+        newLocations.push(x.toString());
+        newLocations.push(y.toString());
+    }
+    return newLocations;
+}
+
+function contractLocations(locations) {
+    var center = findCenter(locations);
+    var newLocations = [];
+    for (var i = 0; i < locations.length; i+=2) {
+        var x = parseInt(locations[i]);
+        var y = parseInt(locations[i + 1]);
+        if (x > center.x) x--;
+        if (x < center.x) x++;
+        if (y > center.y) y--;
+        if (y < center.y) y++;
         newLocations.push(x.toString());
         newLocations.push(y.toString());
     }
