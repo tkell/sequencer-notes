@@ -282,20 +282,28 @@ function makeNoteTimes(points, tempo) {
     return noteTimes;
 }
 
-function makeSequence(locations, color, midiNote, buffer, gain) {
-    var sequence = drawSequence(locations, color);
-    sequence.numNotes = locations.length / 2;
-    sequence.locations = locations;
-    sequence.noteTimes = makeNoteTimes(locations, transport.tempo);
-    sequence.currentIndex = 0;
-    sequence.numLoops = 0;
-    sequence.hasStarted = false;
-    sequence.absoluteNextNoteTime = (context.currentTime);
+function initSequence(buffer, gain, midiNote) {
+    var sequence = {};
     sequence.midiNote = midiNote;
     sequence.buffer = buffer;
     sequence.gain = gain;
+    sequence.numLoops = 0;
+    sequence.hasStarted = false;
     sequence.magicSeparator = ",";
-    sequence.startLines = []
+    sequence.startLines = [];
+    return sequence;
+}
+
+function makeSequence(locations, color, midiNote, buffer, gain) {
+    var sequence = initSequence(buffer, gain, midiNote)
+    var drawn = drawSequence(locations, color);
+    sequence.circles = drawn.circles;
+    sequence.lines = drawn.lines;
+    sequence.numNotes = locations.length / 2;
+    sequence.locations = locations;
+    sequence.noteTimes = makeNoteTimes(locations, transport.tempo);
+    sequence.absoluteNextNoteTime = (context.currentTime);
+    sequence.currentIndex = 0;
     return sequence;
 }
 
@@ -313,9 +321,11 @@ function deleteSequence(index) {
             lines[i].remove();
         }
     }
-    var buffer = transport.sequences[index].buffer;
-    var gain = transport.sequences[index].gain;
-    transport.sequences[index] = {buffer: buffer, gain: gain};
+    transport.sequences[index] = initSequence(
+        transport.sequences[index].buffer;
+        transport.sequences[index].gain;
+        transport.sequences[index].midiNotei
+    );
 }
 
 // Setup code from here --------------------------------------
@@ -505,12 +515,12 @@ function processInput(event) {
                 var line = sequence.startLines[i];
                 line.remove();
             }
-            var buffer = sequence.buffer;
-            var gain = sequence.gain;
-            var color = transport.colors[seqIndex];
-            var midiNote = transport.notes[seqIndex];
             deleteSequence(seqIndex);
-            var newSequence = makeSequence(inputList, color, midiNote, buffer, gain);
+            var newSequence = makeSequence(inputList,
+                transport.colors[seqIndex],
+                transport.notes[seqIndex],
+                sequence.buffer,
+                sequence.gain);
             transport.sequences[seqIndex] = newSequence;
         }
     }
@@ -552,12 +562,12 @@ function processInput(event) {
         // and parse things back into a string so we can fill the 
         // text area correctly!
         if (inputList.length > 0) {
-            var buffer = sequence.buffer;
-            var gain = sequence.gain;
-            var color = transport.colors[seqIndex];
-            var midiNote = transport.notes[seqIndex];
             deleteSequence(seqIndex);
-            var newSequence = makeSequence(inputList, color, midiNote, buffer, gain);
+            var newSequence = makeSequence(inputList,
+                transport.colors[seqIndex],
+                transport.notes[seqIndex],
+                sequence.buffer,
+                sequence.gain);
             transport.sequences[seqIndex] = newSequence;
         }
     }
