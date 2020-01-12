@@ -457,16 +457,26 @@ function updateSeq(inputList, seqIndex, sequence, event) {
     }
 }
 
+function getFunctionParameter(funcName) {
+    var size = 1;
+    if (funcName.length > 1) {
+        size = parseInt(funcName.slice(1, funcName.length));
+    }
+    return size;
+}
+
 function runUpdateFunction(seqIndex, event, funcName) {
     var sequence = transport.sequences[seqIndex];
-    // E:  Expand by 1
-    if (funcName === "E") {
-        var inputList = expandLocations(sequence.locations);
+    // E:  Expand
+    if (funcName === "E" || funcName[0] === "E") {
+        var size = getFunctionParameter(funcName)
+        var inputList = expandLocations(sequence.locations, size);
         updateSeq(inputList, seqIndex, sequence, event);
     }
-    // e:  Contract by 1
-    if (funcName === "e") {
-        var inputList = contractLocations(sequence.locations);
+    // e:  Contract
+    if (funcName === "e" || funcName[0] === "e") {
+        var size = getFunctionParameter(funcName) * -1
+        var inputList = expandLocations(sequence.locations, size);
         updateSeq(inputList, seqIndex, sequence, event);
     }
 }
@@ -619,32 +629,16 @@ function findCenter(locations) {
     return {x: xCenter, y: yCenter}
 }
 
-function expandLocations(locations) {
+function expandLocations(locations, size) {
     var center = findCenter(locations);
     var newLocations = [];
     for (var i = 0; i < locations.length; i+=2) {
         var x = parseInt(locations[i]);
         var y = parseInt(locations[i + 1]);
-        if (x > center.x) x++;
-        if (x < center.x) x--;
-        if (y > center.y) y++;
-        if (y < center.y) y--;
-        newLocations.push(x.toString());
-        newLocations.push(y.toString());
-    }
-    return newLocations;
-}
-
-function contractLocations(locations) {
-    var center = findCenter(locations);
-    var newLocations = [];
-    for (var i = 0; i < locations.length; i+=2) {
-        var x = parseInt(locations[i]);
-        var y = parseInt(locations[i + 1]);
-        if (x > center.x) x--;
-        if (x < center.x) x++;
-        if (y > center.y) y--;
-        if (y < center.y) y++;
+        if (x > center.x) x+=size;
+        if (x < center.x) x-=size;
+        if (y > center.y) y+=size;
+        if (y < center.y) y-=size;
         newLocations.push(x.toString());
         newLocations.push(y.toString());
     }
