@@ -457,26 +457,38 @@ function updateSeq(inputList, seqIndex, sequence, event) {
     }
 }
 
-function getFunctionParameter(funcName) {
-    var size = 1;
+function getFunctionParameter(funcName, defaultRes) {
+    var param = defaultRes;
     if (funcName.length > 1) {
-        size = parseInt(funcName.slice(1, funcName.length));
+        param = parseInt(funcName.slice(1, funcName.length));
     }
-    return size;
+    return param;
 }
 
 function runUpdateFunction(seqIndex, event, funcName) {
     var sequence = transport.sequences[seqIndex];
     // E:  Expand
     if (funcName === "E" || funcName[0] === "E") {
-        var size = getFunctionParameter(funcName)
+        var size = getFunctionParameter(funcName, 1)
         var inputList = expandLocations(sequence.locations, size);
         updateSeq(inputList, seqIndex, sequence, event);
     }
     // e:  Contract
     if (funcName === "e" || funcName[0] === "e") {
-        var size = getFunctionParameter(funcName) * -1
+        var size = getFunctionParameter(funcName, 1) * -1
         var inputList = expandLocations(sequence.locations, size);
+        updateSeq(inputList, seqIndex, sequence, event);
+    }
+    // R:  Rotate right
+    if (funcName === "R" || funcName[0] === "R") {
+        var angle = getFunctionParameter(funcName, 90)
+        var inputList = rotateLocations(sequence.locations, angle);
+        updateSeq(inputList, seqIndex, sequence, event);
+    }
+    // r:  Rotate left
+    if (funcName === "r" || funcName[0] === "r") {
+        var angle = getFunctionParameter(funcName, 90) * -1;
+        var inputList = rotateLocations(sequence.locations, angle);
         updateSeq(inputList, seqIndex, sequence, event);
     }
 }
@@ -615,8 +627,7 @@ function createStringFromInputList(inputList) {
     return pairsList.join(";") + ";";
 }
 
-// Transformers and helpers from here
-
+// Pattern modification fuctions and helpers from here
 function findCenter(locations) {
     var xSum = 0;
     var ySum = 0;
@@ -627,6 +638,21 @@ function findCenter(locations) {
     var xCenter = xSum / (locations.length / 2);
     var yCenter = ySum / (locations.length / 2);
     return {x: xCenter, y: yCenter}
+}
+
+function rotateLocations(locations, angle) {
+    angle = angle * Math.PI / 180.0;
+    var center = findCenter(locations);
+    var newLocations = [];
+    for (var i = 0; i < locations.length; i+=2) {
+        var x = parseInt(locations[i]);
+        var y = parseInt(locations[i + 1]);
+        var newX = Math.cos(angle) * (x - center.x) - Math.sin(angle) * (y - center.y) + center.x;
+        var newY = Math.sin(angle) * (x - center.x) + Math.cos(angle) * (y - center.y) + center.y
+        newLocations.push(Math.round(newX).toString());
+        newLocations.push(Math.round(newY).toString());
+    }
+    return newLocations;
 }
 
 function expandLocations(locations, size) {
