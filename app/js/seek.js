@@ -479,16 +479,40 @@ function runUpdateFunction(seqIndex, event, funcName) {
         var inputList = expandLocations(sequence.locations, size);
         updateSeq(inputList, seqIndex, sequence, event);
     }
-    // R:  Rotate right
-    if (funcName === "R" || funcName[0] === "R") {
+    // S:  Spin right
+    if (funcName === "S" || funcName[0] === "S") {
         var angle = getFunctionParameter(funcName, 90)
         var inputList = rotateLocations(sequence.locations, angle);
         updateSeq(inputList, seqIndex, sequence, event);
     }
-    // r:  Rotate left
-    if (funcName === "r" || funcName[0] === "r") {
+    // s:  Spin left
+    if (funcName === "s" || funcName[0] === "s") {
         var angle = getFunctionParameter(funcName, 90) * -1;
         var inputList = rotateLocations(sequence.locations, angle);
+        updateSeq(inputList, seqIndex, sequence, event);
+    }
+    // R: Move right
+    if (funcName === "R" || funcName[0] === "R") {
+        var size = getFunctionParameter(funcName, 1);
+        var inputList = translateLocations(sequence.locations, "X", size);
+        updateSeq(inputList, seqIndex, sequence, event);
+    }
+    // L: Move left
+    if (funcName === "L" || funcName[0] === "L") {
+        var size = getFunctionParameter(funcName, 1) * -1;
+        var inputList = translateLocations(sequence.locations, "X", size);
+        updateSeq(inputList, seqIndex, sequence, event);
+    }
+    // U: Move up
+    if (funcName === "U" || funcName[0] === "U") {
+        var size = getFunctionParameter(funcName, 1) * -1;
+        var inputList = translateLocations(sequence.locations, "Y", size);
+        updateSeq(inputList, seqIndex, sequence, event);
+    }
+    // D: Move down
+    if (funcName === "D" || funcName[0] === "D") {
+        var size = getFunctionParameter(funcName, 1);
+        var inputList = translateLocations(sequence.locations, "Y", size);
         updateSeq(inputList, seqIndex, sequence, event);
     }
 }
@@ -665,6 +689,19 @@ function expandLocations(locations, size) {
         if (x < center.x) x-=size;
         if (y > center.y) y+=size;
         if (y < center.y) y-=size;
+        newLocations.push(x.toString());
+        newLocations.push(y.toString());
+    }
+    return newLocations;
+}
+
+function translateLocations(locations, axis ,size) {
+    var newLocations = [];
+    for (var i = 0; i < locations.length; i+=2) {
+        var x = parseInt(locations[i]);
+        var y = parseInt(locations[i + 1]);
+        if (axis === "X") x+=size;
+        if (axis === "Y") y+=size;
         newLocations.push(x.toString());
         newLocations.push(y.toString());
     }
