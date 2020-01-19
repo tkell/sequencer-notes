@@ -779,8 +779,8 @@ window.onkeypress = processGlobalInput;
 // Unsure why xLength is 1025 and not 1028?
 drawGrid(0, 0, 1025, 512, 16, 32, "#a4c3b5");
 
-drawDotArea(0, 6, 0, 8, "#330055");
-drawDotArea(6, 12, 0, 8, "#00cc55");
+//drawDotArea(0, 6, 0, 8, "#330055");
+//drawDotArea(6, 12, 0, 8, "#00cc55");
 
 window.addEventListener('click', function() {
     if (context.state !== 'running') {
