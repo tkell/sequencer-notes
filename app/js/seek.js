@@ -211,8 +211,10 @@ var transport = {
     "lookAhead": 0.10, // seconds
     "scheduleInterval": 30, // milliseconds
     "sequences": [],
+    // ahh, all three of these can be objects
     "colors": ["#453c7c", "#9acea1", "#aab2ff", "#34f7b1", "#f7347a"],
-    "notes": [60, 62, 64, 65, 67],
+    "notes": [60, 62, 64, 65, 67, 69],
+    "areas": [[0, 8, 0, 8], [8, 16, 0, 8], [16, 24, 0, 8], [24, 33, 0, 8], [0, 33, 8, 17]],
     "midiActivated": false,
     "midiOutputs": [],
     "midiIndex": 0,
@@ -779,8 +781,16 @@ window.onkeypress = processGlobalInput;
 // Unsure why xLength is 1025 and not 1028?
 drawGrid(0, 0, 1025, 512, 16, 32, "#a4c3b5");
 
-//drawDotArea(0, 6, 0, 8, "#330055");
-//drawDotArea(6, 12, 0, 8, "#00cc55");
+for (var i = 0; i < transport.areas.length; i++) {
+    var area = transport.areas[i];
+    var x1 = area[0];
+    var x2 = area[1];
+    var y1 = area[2];
+    var y2 = area[3];
+    var color = transport.colors[i];
+    console.log(area, color);
+    drawDotArea(x1, x2, y1, y2, color);
+}
 
 window.addEventListener('click', function() {
     if (context.state !== 'running') {
