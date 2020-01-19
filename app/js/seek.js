@@ -1,6 +1,32 @@
 // visual code from here -----------------------------
 var gridSize = 32;
 
+function drawDot(x, y, width, height, color) {
+    var rect = new Rectangle(x, y, width, height);
+    var path = new Path.Rectangle(rect);
+    path.fillColor = color;
+}
+
+function drawDots(xCenter, yCenter, color, offset) {
+    for (var i = offset * -1; i < offset; i+=4) {
+        var x = xCenter + i;
+        for (var j = offset * -1; j < offset; j+=4) {
+            var y = yCenter + j;
+            drawDot(x, y, 1, 1, color);
+        }
+    }
+}
+
+function drawDotArea(xStart, xEnd, yStart, yEnd, color) {
+    for (var i = xStart; i < xEnd; i++) {
+        var x = i * gridSize;
+        for (var j = yStart; j < yEnd; j++) {
+            var y = j * gridSize
+            drawDots(x, y, color, gridSize / 2);
+        }
+    }
+}
+
 function drawLine(startX, startY, offsetX, offsetY, color) {
     var path = new Path();
     path.strokeColor = color;
@@ -717,6 +743,7 @@ function zoomInCss(seqIndex) {
     textArea.style.top = topDistance + "px";
 }
 
+// CSS helpers
 function zoomOutCss(seqIndex) {
     var id = "seq" + (seqIndex + 1);
     var textArea = document.getElementById(id);
@@ -735,6 +762,7 @@ function zoomOut(event) {
     zoomOutCss(seqIndex);
 }
 
+// Raw run-this-first setup code
 var inputs = document.getElementsByClassName("seqInput");
 for (var i = 0; i < inputs.length; i++) {
     var input = inputs[i];
@@ -750,6 +778,9 @@ window.onkeypress = processGlobalInput;
 
 // Unsure why xLength is 1025 and not 1028?
 drawGrid(0, 0, 1025, 512, 16, 32, "#a4c3b5");
+
+drawDotArea(0, 6, 0, 8, "#330055");
+drawDotArea(6, 12, 0, 8, "#00cc55");
 
 window.addEventListener('click', function() {
     if (context.state !== 'running') {
