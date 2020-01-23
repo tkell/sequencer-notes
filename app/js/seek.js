@@ -117,17 +117,17 @@ function playVisual(circle, timeout) {
 
 function entryVisual(xVal, yVal, color) {
     var lines = [];
-    var yLine = drawGridLine(0, yVal, 32, yVal, color);
-    var xLine = drawGridLine(xVal, 0, xVal, 16, color);
+    var yLine = drawGridLine(0, yVal, 31, yVal, color);
+    var xLine = drawGridLine(xVal, 0, xVal, 15, color);
     lines.push(yLine, xLine);
     return lines;
 }
 
 function inputVisual(color, timeout) {
-    var line1 = drawGridLine(0, 0, 32, 0, color);
-    var line2 = drawGridLine(32, 0, 32, 16, color);
-    var line3 = drawGridLine(32, 16, 0, 16, color);
-    var line4 = drawGridLine(0, 16, 0, 0, color);
+    var line1 = drawGridLine(0, 0, 31, 0, color);
+    var line2 = drawGridLine(31, 0, 31, 15, color);
+    var line3 = drawGridLine(31, 15, 0, 15, color);
+    var line4 = drawGridLine(0, 15, 0, 0, color);
     setTimeout(function() {
         line1.remove();
         line2.remove();
@@ -215,6 +215,22 @@ function createArea(color, note, layout) {
     return area;
 }
 
+function createNoteMap(areas) {
+    var noteMap = new Array(gridSize);
+    noteMap = noteMap.fill([]);
+    for (var i = 0; i < areas.length; i++) {
+        var layout = areas[i].layout;
+        var note = areas[i][note];
+        for (var x = layout[0]; x <= layout[1]; x++) {
+            for (var y = layout[2]; y <= layout[2]; y++) {
+                console.log(x, noteMap, noteMap[x]);
+                noteMap[x][y] = note;
+            }
+        }
+    }
+    return noteMap;
+}
+
 var transport = {
     "tempo":  120,
     "isPlaying": false,
@@ -222,16 +238,18 @@ var transport = {
     "scheduleInterval": 30, // milliseconds
     "sequences": [],
     "areas": [
-        createArea("#453c7c", 60, [0, 8, 0, 8]),
-        createArea("#9acea1", 62, [9, 16, 0, 8]),
-        createArea("#aab2ff", 64, [17, 24, 0, 8]),
-        createArea("#34f7b1", 65, [25, 33, 0, 8]),
-        createArea("#f7347a", 67, [0, 33, 9, 17]),
+        createArea("#453c7c", 60, [0, 7, 0, 7]),
+        createArea("#9acea1", 62, [8, 15, 0, 7]),
+        createArea("#aab2ff", 64, [16, 23, 0, 7]),
+        createArea("#34f7b1", 65, [24, 31, 0, 7]),
+        createArea("#f7347a", 67, [0, 31, 8, 15]),
         ],
+    "noteMap": {},
     "midiActivated": false,
     "midiOutputs": [],
     "midiIndex": 0,
 }
+transport.noteMap = createNoteMap(transport.areas);
 
 // Helper function to do playback and visuals
 function doPlay(sequence, playTime, visualDelay, midiChannel) {
@@ -792,7 +810,7 @@ for (var i = 0; i < inputs.length; i++) {
 window.onkeypress = processGlobalInput;
 
 // Unsure why xLength is 1025 and not 1028?
-drawGrid(0, 0, 1025, 512, 16, 32, "#a4c3b5");
+drawGrid(0, 0, 996, 480, 15, 31, "#a4c3b5");
 
 for (var i = 0; i < transport.areas.length; i++) {
     var area = transport.areas[i].layout;
