@@ -8,21 +8,23 @@ function drawDot(x, y, width, height, color) {
 }
 
 function drawDots(xCenter, yCenter, color, offset) {
-    for (var i = offset * -1; i < offset; i+=4) {
+    for (var i = offset * -1; i < offset; i+=8) {
         var x = xCenter + i;
-        for (var j = offset * -1; j < offset; j+=4) {
+        for (var j = offset * -1; j < offset; j+=8) {
             var y = yCenter + j;
-            drawDot(x, y, 1, 1, color);
+            drawDot(x, y, 2, 2, color);
         }
     }
 }
 
 function drawDotArea(xStart, xEnd, yStart, yEnd, color) {
-    for (var i = xStart; i < xEnd; i++) {
+    for (var i = xStart; i <= xEnd; i++) {
         var x = i * gridSize;
-        for (var j = yStart; j < yEnd; j++) {
+        for (var j = yStart; j <= yEnd; j++) {
             var y = j * gridSize
-            drawDots(x, y, color, gridSize / 2);
+            if (i === xStart || j === yStart || i === xEnd || j  === yEnd) {
+                drawDots(x, y, color, gridSize / 2);
+            }
         }
     }
 }
@@ -205,16 +207,27 @@ function changeTempo(transport, newTempo) {
     tempoSpan.textContent = transport.tempo;
 }
 
+function createArea(color, note, layout) {
+    var area = {};
+    area.color = color;
+    area.note = note;
+    area.layout = layout;
+    return area;
+}
+
 var transport = {
     "tempo":  120,
     "isPlaying": false,
     "lookAhead": 0.10, // seconds
     "scheduleInterval": 30, // milliseconds
     "sequences": [],
-    // ahh, all three of these can be objects
-    "colors": ["#453c7c", "#9acea1", "#aab2ff", "#34f7b1", "#f7347a"],
-    "notes": [60, 62, 64, 65, 67, 69],
-    "areas": [[0, 8, 0, 8], [8, 16, 0, 8], [16, 24, 0, 8], [24, 33, 0, 8], [0, 33, 8, 17]],
+    "areas": [
+        createArea("#453c7c", 60, [0, 8, 0, 8]),
+        createArea("#9acea1", 62, [9, 16, 0, 8]),
+        createArea("#aab2ff", 64, [17, 24, 0, 8]),
+        createArea("#34f7b1", 65, [25, 33, 0, 8]),
+        createArea("#f7347a", 67, [0, 33, 9, 17]),
+        ],
     "midiActivated": false,
     "midiOutputs": [],
     "midiIndex": 0,
@@ -384,16 +397,16 @@ function parseInput(inputString) {
 
 // Keypress handlers --------------------------------------
 function displayMidiNotes(transport) {
-    for (var i = 0; i < transport.notes.length; i++) {
+    for (var i = 0; i < transport.areas.length; i++) {
         var idString = "midiNote" + (i + 1);
-        var midiString = transport.notes[i]
+        var midiString = transport.areas[i].note;
         var midiNoteSpan = document.getElementById(idString);
         midiNoteSpan.textContent = midiString;
     }
 }
 
 function hideMidiNotes(transport) {
-    for (var i = 0; i < transport.notes.length; i++) {
+    for (var i = 0; i < transport.areas.length; i++) {
         var idString = "midiNote" + (i + 1);
         var midiString = "";
         var midiNoteSpan = document.getElementById(idString);
@@ -475,8 +488,8 @@ function updateSeq(inputList, seqIndex, sequence, event) {
     if (inputList.length > 0) {
         deleteSequence(seqIndex);
         var newSequence = makeSequence(inputList,
-            transport.colors[seqIndex],
-            transport.notes[seqIndex],
+            transport.areas[seqIndex].color,
+            transport.areas[seqIndex].note,
             sequence.buffer,
             sequence.gain);
         transport.sequences[seqIndex] = newSequence;
@@ -568,7 +581,7 @@ function processInput(event) {
         event.target.value = inputString;
         event.preventDefault();
         // Draw starting lines
-        var color = transport.colors[seqIndex];
+        var color = transport.areas[seqIndex].color;
         var pairs = parseInput(inputString);
         if (pairs.length >= 2) {
             var x = pairs[pairs.length - 2];
@@ -588,8 +601,8 @@ function processInput(event) {
         if (event.code.indexOf("Digit") == 0) {
             event.preventDefault();
             var offset = parseInt(event.code.replace("Digit", ""));
-            transport.notes[seqIndex] += offset
-            sequence.midiNote = transport.notes[seqIndex];
+            transport.areas[seqIndex].note += offset
+            sequence.midiNote = transport.areas[seqIndex].note;
             displayMidiNotes(transport);
         }
         return; // just in case
@@ -599,8 +612,8 @@ function processInput(event) {
         if (event.code.indexOf("Digit") == 0) {
             event.preventDefault();
             var offset = parseInt(event.code.replace("Digit", ""));
-            transport.notes[seqIndex] -= offset
-            sequence.midiNote = transport.notes[seqIndex];
+            transport.areas[seqIndex].note -= offset
+            sequence.midiNote = transport.areas[seqIndex].note;
             displayMidiNotes(transport);
         }
         return; // just in case
@@ -625,8 +638,8 @@ function processInput(event) {
             }
             deleteSequence(seqIndex);
             var newSequence = makeSequence(inputList,
-                transport.colors[seqIndex],
-                transport.notes[seqIndex],
+                transport.areas[seqIndex].color,
+                transport.areas[seqIndex].note,
                 sequence.buffer,
                 sequence.gain);
             transport.sequences[seqIndex] = newSequence;
@@ -663,7 +676,7 @@ function processInput(event) {
         zoomInCss(seqIndex);
     }
     // fall through to regular input: pulse the grid
-    var color = transport.colors[seqIndex];
+    var color = transport.areas[seqIndex].color;
     inputVisual(color, 0.5);
 }
 
@@ -782,13 +795,12 @@ window.onkeypress = processGlobalInput;
 drawGrid(0, 0, 1025, 512, 16, 32, "#a4c3b5");
 
 for (var i = 0; i < transport.areas.length; i++) {
-    var area = transport.areas[i];
+    var area = transport.areas[i].layout;
     var x1 = area[0];
     var x2 = area[1];
     var y1 = area[2];
     var y2 = area[3];
-    var color = transport.colors[i];
-    console.log(area, color);
+    var color = transport.areas[i].color;
     drawDotArea(x1, x2, y1, y2, color);
 }
 
