@@ -143,7 +143,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext;
 var context = new AudioContext();
 var audioUrls = ["kick.mp3", "snare.mp3", "hihat.mp3", "rim.wav", "cowbell.mp3"];
 
-function loadAudio(url, sequence) {
+function loadAudio(url, area) {
     var request = new XMLHttpRequest();
     request.open('GET', url, true);
     request.responseType = 'arraybuffer';
@@ -151,8 +151,7 @@ function loadAudio(url, sequence) {
     request.onload = function() {
         context.decodeAudioData(request.response, function(buffer) {
             // Clean this up!
-            sequence.buffer = buffer;
-            sequence.gain = 0.8;
+            area.buffer = buffer;
         }, function() {
             console.log("Audio did not load!");
         });
@@ -166,6 +165,7 @@ function playSound(when, buffer, gain) {
     var source = context.createBufferSource()
     source.buffer = buffer
     var gainNode = context.createGain();
+    console.log(gain);
     gainNode.gain.value = gain;
     source.connect(gainNode);
     gainNode.connect(context.destination);
@@ -207,27 +207,33 @@ function changeTempo(transport, newTempo) {
     tempoSpan.textContent = transport.tempo;
 }
 
-function createArea(color, note, layout) {
+function createArea(color, note, layout, index) {
     var area = {};
     area.color = color;
     area.note = note;
+    area.buffer = null;
     area.layout = layout;
+    area.index = index;
     return area;
 }
 
 function createNoteMap(areas) {
     var noteMap = new Array(gridSize);
-    noteMap = noteMap.fill([]);
+    for (var i = 0; i < noteMap.length; i++) {
+        noteMap[i] = new Array(gridSize / 2);
+    }
     for (var i = 0; i < areas.length; i++) {
-        var layout = areas[i].layout;
-        var note = areas[i][note];
+        var area = areas[i];
+        var layout = area.layout;
+        var index = i;
         for (var x = layout[0]; x <= layout[1]; x++) {
-            for (var y = layout[2]; y <= layout[2]; y++) {
-                console.log(x, noteMap, noteMap[x]);
-                noteMap[x][y] = note;
+            for (var y = layout[2]; y <= layout[3]; y++) {
+                // we can just store the index here!
+                noteMap[x][y] = index;
             }
         }
     }
+    console.log(noteMap);
     return noteMap;
 }
 
@@ -238,11 +244,11 @@ var transport = {
     "scheduleInterval": 30, // milliseconds
     "sequences": [],
     "areas": [
-        createArea("#453c7c", 60, [0, 7, 0, 7]),
-        createArea("#9acea1", 62, [8, 15, 0, 7]),
-        createArea("#aab2ff", 64, [16, 23, 0, 7]),
-        createArea("#34f7b1", 65, [24, 31, 0, 7]),
-        createArea("#f7347a", 67, [0, 31, 8, 15]),
+        createArea("#453c7c", 60, [0, 7, 0, 7], 0),
+        createArea("#9acea1", 62, [8, 15, 0, 7], 1),
+        createArea("#aab2ff", 64, [16, 23, 0, 7], 2),
+        createArea("#34f7b1", 65, [24, 31, 0, 7], 3),
+        createArea("#f7347a", 67, [0, 31, 8, 15], 4),
         ],
     "noteMap": {},
     "midiActivated": false,
@@ -254,6 +260,8 @@ transport.noteMap = createNoteMap(transport.areas);
 // Helper function to do playback and visuals
 function doPlay(sequence, playTime, visualDelay, midiChannel) {
     var circle = sequence.circles[sequence.currentIndex];
+    var areaIndex = sequence.notes[sequence.currentIndex];
+    var areaToPlay = transport.areas[areaIndex];
     var nextIndex = (sequence.currentIndex + 1) % sequence.numNotes
     if (nextIndex === 0) {
         sequence.numLoops += 1;
@@ -262,10 +270,10 @@ function doPlay(sequence, playTime, visualDelay, midiChannel) {
     var timeToNextNote = sequence.noteTimes[sequence.currentIndex];
     playVisual(circle, visualDelay);
     if (midiOutput) {
-        playMidi(playTime, sequence.midiNote, midiChannel, sequence.gain);
+        playMidi(playTime, areaToPlay.note, midiChannel, sequence.gain);
     }
     else {
-        playSound(playTime, sequence.buffer, sequence.gain);
+        playSound(playTime, areaToPlay.buffer, sequence.gain);
     }
     sequence.currentIndex = nextIndex;
     sequence.absoluteNextNoteTime = sequence.absoluteNextNoteTime += timeToNextNote
@@ -341,10 +349,8 @@ function makeNoteTimes(points, tempo) {
     return noteTimes;
 }
 
-function initSequence(buffer, gain, midiNote) {
+function initSequence(gain) {
     var sequence = {};
-    sequence.midiNote = midiNote;
-    sequence.buffer = buffer;
     sequence.gain = gain;
     sequence.numLoops = 0;
     sequence.hasStarted = false;
@@ -353,12 +359,23 @@ function initSequence(buffer, gain, midiNote) {
     return sequence;
 }
 
-function makeSequence(locations, color, midiNote, buffer, gain) {
-    var sequence = initSequence(buffer, gain, midiNote)
+function getNotes(locations) {
+    var notes = [];
+    for (var i = 0; i < locations.length; i+=2) {
+        var x = parseInt(locations[i]);
+        var y = parseInt(locations[i + 1]);
+        notes.push(transport.noteMap[x][y]);
+    }
+    return notes;
+}
+
+function makeSequence(locations, color, gain) {
+    var sequence = initSequence(gain)
     var drawn = drawSequence(locations, color);
     sequence.circles = drawn.circles;
     sequence.lines = drawn.lines;
     sequence.numNotes = locations.length / 2;
+    sequence.notes = getNotes(locations)
     sequence.locations = locations;
     sequence.noteTimes = makeNoteTimes(locations, transport.tempo);
     sequence.absoluteNextNoteTime = (context.currentTime);
@@ -380,10 +397,7 @@ function deleteSequence(index) {
             lines[i].remove();
         }
     }
-    transport.sequences[index] = initSequence(
-        transport.sequences[index].buffer,
-        transport.sequences[index].gain,
-        transport.sequences[index].midiNote);
+    transport.sequences[index] = initSequence(transport.sequences[index].gain)
 }
 
 // Setup code from here --------------------------------------
@@ -507,8 +521,6 @@ function updateSeq(inputList, seqIndex, sequence, event) {
         deleteSequence(seqIndex);
         var newSequence = makeSequence(inputList,
             transport.areas[seqIndex].color,
-            transport.areas[seqIndex].note,
-            sequence.buffer,
             sequence.gain);
         transport.sequences[seqIndex] = newSequence;
         var newInputString = createStringFromInputList(inputList);
@@ -657,8 +669,6 @@ function processInput(event) {
             deleteSequence(seqIndex);
             var newSequence = makeSequence(inputList,
                 transport.areas[seqIndex].color,
-                transport.areas[seqIndex].note,
-                sequence.buffer,
                 sequence.gain);
             transport.sequences[seqIndex] = newSequence;
         }
@@ -802,9 +812,12 @@ for (var i = 0; i < inputs.length; i++) {
     input.onkeypress = processInput;
     input.onfocus = zoomIn;
     input.onblur = zoomOut;
-    transport.sequences[i] = {};
+    transport.sequences[i] = initSequence(0.8);
+}
+
+for (var i = 0; i < transport.areas.length; i++) {
     var url = "audio/" + audioUrls[i];
-    loadAudio(url, transport.sequences[i]);
+    loadAudio(url, transport.areas[i]);
 }
 
 window.onkeypress = processGlobalInput;
