@@ -1,32 +1,55 @@
-// visual code from here -----------------------------
+// globals
 var gridSize = 32;
+var setupColors = ["#0000ff", "#00a000", "#ff4500", "#4b0082", "#ff1493"];
+var setupMidiNotes = [60, 62, 64, 65, 67]
 
+var transport = {
+    "tempo":  120,
+    "isPlaying": false,
+    "lookAhead": 0.10, // seconds
+    "scheduleInterval": 30, // milliseconds
+    "sequences": [],
+    "areas": [],
+    "noteMap": {},
+    "midiActivated": false,
+    "midiOutputs": [],
+    "midiIndex": 0,
+}
+
+// visual code from here -----------------------------
 function drawDot(x, y, width, height, color) {
     var rect = new Rectangle(x, y, width, height);
     var path = new Path.Rectangle(rect);
     path.fillColor = color;
     path.opacity = 0.33;
+    return path;
 }
 
 function drawDots(xCenter, yCenter, color, offset) {
+    var dots = [];
     for (var i = offset * -1; i < offset; i+=8) {
         var x = xCenter + i;
         for (var j = offset * -1; j < offset; j+=8) {
             var y = yCenter + j;
-            drawDot(x, y, 2, 2, color);
+            var dot = drawDot(x, y, 2, 2, color);
+            dots.push(dot);
         }
     }
+    return dots;
 }
 
 function drawDotArea(xStart, xEnd, yStart, yEnd, color) {
+    var allDots = [];
     for (var i = xStart; i <= xEnd; i++) {
         var x = i * gridSize;
         for (var j = yStart; j <= yEnd; j++) {
             var y = j * gridSize
-            drawDots(x, y, color, gridSize / 2);
+            var dots = drawDots(x, y, color, gridSize / 2);
+            allDots.push(dots);
         }
     }
-    drawDotSquare(xStart, yStart, xEnd, yEnd, color);
+    var lines = drawDotSquare(xStart, yStart, xEnd, yEnd, color);
+    return {dots: allDots, lines: lines};
 }
 
 function drawDotSquare(xStart, yStart, xEnd, yEnd, color) {
@@ -36,10 +59,23 @@ function drawDotSquare(xStart, yStart, xEnd, yEnd, color) {
     var yLoc1 = yStart * gridSize - (gridSize / 2) + offset;
     var xLoc2 = xEnd * gridSize + (gridSize / 2) - offset;
     var yLoc2 = yEnd * gridSize + (gridSize / 2) - offset;
-    drawLine(xLoc1, yLoc1, xLoc2 - xLoc1, 0, color, 4, opacity);
-    drawLine(xLoc1, yLoc1, 0, yLoc2 - yLoc1, color, 4, opacity);
-    drawLine(xLoc2, yLoc1, 0, yLoc2 - yLoc1, color, 4, opacity);
-    drawLine(xLoc2, yLoc2, xLoc1 - xLoc2, 0, color, 4, opacity);
+    var l1 = drawLine(xLoc1, yLoc1, xLoc2 - xLoc1, 0, color, 4, opacity);
+    var l2 = drawLine(xLoc1, yLoc1, 0, yLoc2 - yLoc1, color, 4, opacity);
+    var l3 = drawLine(xLoc2, yLoc1, 0, yLoc2 - yLoc1, color, 4, opacity);
+    var l4 = drawLine(xLoc2, yLoc2, xLoc1 - xLoc2, 0, color, 4, opacity);
+    return [l1, l2, l3, l4];
+}
+
+function drawAllDotAreas() {
+    for (var i = 0; i < transport.areas.length; i++) {
+        var area = transport.areas[i].layout;
+        var x1 = area[0];
+        var y1 = area[1];
+        var x2 = area[2];
+        var y2 = area[3];
+        var color = transport.areas[i].color;
+        transport.areas[i].dotsAndLines = drawDotArea(x1, x2, y1, y2, color);
+    }
 }
 
 function drawLine(startX, startY, offsetX, offsetY, color, strokeWidth, opacity) {
@@ -251,31 +287,19 @@ function createNoteMap(areas) {
     return noteMap;
 }
 
-var transport = {
-    "tempo":  120,
-    "isPlaying": false,
-    "lookAhead": 0.10, // seconds
-    "scheduleInterval": 30, // milliseconds
-    "sequences": [],
-    "areas": [],
-    "noteMap": {},
-    "midiActivated": false,
-    "midiOutputs": [],
-    "midiIndex": 0,
-}
 
 // Helper function to do playback and visuals
 function doPlay(sequence, playTime, visualDelay, midiChannel) {
-    var circle = sequence.circles[sequence.currentIndex];
+    // Get new notes every time, in case an area has moved
+    sequence.notes = getNotes(sequence.locations)
     var areaIndex = sequence.notes[sequence.currentIndex];
     var nextIndex = (sequence.currentIndex + 1) % sequence.numNotes
     if (nextIndex === 0) {
         sequence.numLoops += 1;
     }
-
     var timeToNextNote = sequence.noteTimes[sequence.currentIndex];
+    var circle = sequence.circles[sequence.currentIndex];
     playVisual(circle, visualDelay);
-    console.log(sequence.notes, areaToPlay);
     if (areaIndex !== -1) {
         var areaToPlay = transport.areas[areaIndex];
         if (midiOutput) {
@@ -393,9 +417,9 @@ function makeSequence(locations, color, gain) {
     return sequence;
 }
 
-function deleteSequence(index) {
-    var circles = transport.sequences[index].circles;
-    var lines = transport.sequences[index].lines;
+function removeSequenceGraphics(sequence) {
+    var circles = sequence.circles;
+    var lines = sequence.lines;
 
     if (circles) {
         for (var i = 0; i < circles.length; i++) {
@@ -407,6 +431,10 @@ function deleteSequence(index) {
             lines[i].remove();
         }
     }
+}
+
+function deleteSequence(index) {
+    removeSequenceGraphics(transport.sequences[index]);
     transport.sequences[index] = initSequence(transport.sequences[index].gain)
 }
 
@@ -719,6 +747,61 @@ function processInput(event) {
     }
 }
 
+// BEGIN CLEAN UP HERE!
+// CHECK TO SEE IF MIDI STILL WORKS
+function processAreaInput() {
+    var areaIndex = parseInt(event.target.dataset.areaIndex);
+    var area = transport.areas[areaIndex];
+    if (event.keyCode === 32) {
+        event.preventDefault();
+        return;
+    }
+    if (event.keyCode === 13) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        // delete everything old
+        var dotsAndLinesToDelete = transport.areas[areaIndex].dotsAndLines;
+        var lines = dotsAndLinesToDelete.lines;
+        var allDots = dotsAndLinesToDelete.dots;
+        for (var i = 0; i < lines.length; i++) {
+            lines[i].remove();
+        }
+        for (var i = 0; i < allDots.length; i++) {
+            for (var j = 0; j < allDots[i].length; j++) {
+                allDots[i][j].remove();
+            }
+        }
+
+        // draw everything new
+        var inputString = event.target.value;
+        var layout = inputString.split(",").map(Number);
+        var buffer = transport.areas[areaIndex].buffer;
+        transport.areas[areaIndex] = createArea(setupColors[areaIndex], setupMidiNotes[areaIndex], layout, areaIndex);
+        transport.areas[areaIndex].buffer = buffer;
+
+        var area = transport.areas[areaIndex].layout;
+        var x1 = area[0];
+        var y1 = area[1];
+        var x2 = area[2];
+        var y2 = area[3];
+        var color = transport.areas[areaIndex].color;
+        transport.areas[areaIndex].dotsAndLines = drawDotArea(x1, x2, y1, y2, color);
+        // Dealing with overlaps is going to be a pain
+        transport.noteMap = createNoteMap(transport.areas);
+
+        // re-note and re-draw all sequences, UGH
+        for (var i = 0; i < transport.sequences.length; i++) {
+            var sequence = transport.sequences[i];
+            removeSequenceGraphics(sequence);
+            sequence.notes = getNotes(sequence.locations)
+            var drawn = drawSequence(sequence.locations, sequence.notes);
+            sequence.circles = drawn.circles;
+            sequence.lines = drawn.lines;
+        }
+    }
+}
+
 function createStringFromInputList(inputList) {
     var pairsList = [];
     for (var i = 0; i < inputList.length; i+=2) {
@@ -827,13 +910,11 @@ for (var i = 0; i < inputs.length; i++) {
 }
 
 var areaInputs = document.getElementsByClassName("areaInput");
-var setupColors = ["#0000ff", "#00a000", "#ff4500", "#4b0082", "#ff1493"];
-var setupMidiNotes = [60, 62, 64, 65, 67]
 for (var i = 0; i < areaInputs.length; i++) {
     var input = areaInputs[i];
     var layout = input.value.split(",").map(Number);
     transport.areas[i] = createArea(setupColors[i], setupMidiNotes[i], layout, i);
-    // gotta add keypress stuff!
+    input.onkeypress = processAreaInput;
 }
 
 for (var i = 0; i < transport.areas.length; i++) {
@@ -846,15 +927,7 @@ window.onkeypress = processGlobalInput;
 
 // Unsure why xLength is 1025 and not 1028?
 drawGrid(0, 0, 996, 480, 15, 31, "#888888");
-for (var i = 0; i < transport.areas.length; i++) {
-    var area = transport.areas[i].layout;
-    var x1 = area[0];
-    var y1 = area[1];
-    var x2 = area[2];
-    var y2 = area[3];
-    var color = transport.areas[i].color;
-    drawDotArea(x1, x2, y1, y2, color);
-}
+drawAllDotAreas();
 
 window.addEventListener('click', function() {
     if (context.state !== 'running') {

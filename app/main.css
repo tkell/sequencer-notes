@@ -5,13 +5,13 @@ body {
 
 textarea.seqInput {
   width: 512px;
-  height: 16px;
+  height: 15px;
   border: 1px solid #bbbbbb;
 }
 
 textarea.areaInput {
-  width: 96px;
-  height: 16px;
+  width: 72px;
+  height: 15px;
   display: inline-block;
 }
 
@@ -34,7 +34,7 @@ textarea#area3 {
   border: 1px solid #ff4500;
 }
 textarea#area4 {
-  border: 1px solid #ff1493;
+  border: 1px solid #4b0082;
 }
 textarea#area5 {
   border: 1px solid #ff1493;
