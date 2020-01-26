@@ -18,28 +18,23 @@ textarea.zoomSeq {
 }
 
 textarea#seq1 {
-  color: #453c7c;
-  border: 1px solid #453c7c;
+  border: 1px solid #bbbbbb;
 }
 
 textarea#seq2 {
-  color: #9acea1;
-  border: 1px solid #9acea1;
+  border: 1px solid #bbbbbb;
 }
 
 textarea#seq3 {
-  color: #aab2ff;
-  border: 1px solid #aab2ff;
+  border: 1px solid #bbbbbb;
 }
 
 textarea#seq4 {
-  color: #34f7b1;
-  border: 1px solid #34f7b1;
+  border: 1px solid #bbbbbb;
 }
 
 textarea#seq5 {
-  color: #f7347a;
-  border: 1px solid #f7347a;
+  border: 1px solid #bbbbbb;
 }
 
 span.midiNote {

@@ -614,11 +614,12 @@ function processInput(event) {
         event.target.value = inputString;
         event.preventDefault();
         // Draw starting lines
-        var color = transport.areas[seqIndex].color;
         var pairs = parseInput(inputString);
         if (pairs.length >= 2) {
             var x = pairs[pairs.length - 2];
             var y = pairs[pairs.length - 1];
+            var noteIndex = transport.noteMap[x][y];
+            var color = transport.areas[noteIndex].color;
             var newLines = entryVisual(x, y, color)
             sequence.startLines.push.apply(sequence.startLines, newLines);
         }
@@ -826,7 +827,7 @@ for (var i = 0; i < transport.areas.length; i++) {
 window.onkeypress = processGlobalInput;
 
 // Unsure why xLength is 1025 and not 1028?
-drawGrid(0, 0, 996, 480, 15, 31, "#a4c3b5");
+drawGrid(0, 0, 996, 480, 15, 31, "#888888");
 
 for (var i = 0; i < transport.areas.length; i++) {
     var area = transport.areas[i].layout;
