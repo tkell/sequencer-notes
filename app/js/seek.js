@@ -70,14 +70,17 @@ function drawGridLine(x1, y1, x2, y2, color) {
     return line;
 }
 
-function drawSequence(points, color) {
+function drawSequence(points, notes) {
     sequence = {
         circles: [],
         lines: [],
     };
     // careful of the +=2 here,
-    // and the draw back to the beginning!
+    // and the draw back to the beginning,
+    // and the weird lists-of-different-lengths!
     for (var i = 0; i < points.length; i+=2) {
+        var colorIndex = Math.floor(i / 2);
+        var color = transport.areas[notes[colorIndex]].color;
         // Last line
         if (i === points.length - 2) {
             var x1 = points[i];
@@ -98,6 +101,8 @@ function drawSequence(points, color) {
 
     // careful of the +=2 here!
     for (var j = 0; j < points.length; j+=2) {
+        var colorIndex = Math.floor(j / 2);
+        var color = transport.areas[notes[colorIndex]].color;
         var x = points[j];
         var y = points[j + 1];
         var circle = drawGridCircle(x, y, color);
@@ -165,7 +170,6 @@ function playSound(when, buffer, gain) {
     var source = context.createBufferSource()
     source.buffer = buffer
     var gainNode = context.createGain();
-    console.log(gain);
     gainNode.gain.value = gain;
     source.connect(gainNode);
     gainNode.connect(context.destination);
@@ -233,7 +237,6 @@ function createNoteMap(areas) {
             }
         }
     }
-    console.log(noteMap);
     return noteMap;
 }
 
@@ -371,15 +374,15 @@ function getNotes(locations) {
 
 function makeSequence(locations, color, gain) {
     var sequence = initSequence(gain)
-    var drawn = drawSequence(locations, color);
-    sequence.circles = drawn.circles;
-    sequence.lines = drawn.lines;
-    sequence.numNotes = locations.length / 2;
     sequence.notes = getNotes(locations)
+    sequence.numNotes = locations.length / 2;
     sequence.locations = locations;
     sequence.noteTimes = makeNoteTimes(locations, transport.tempo);
     sequence.absoluteNextNoteTime = (context.currentTime);
     sequence.currentIndex = 0;
+    var drawn = drawSequence(locations, sequence.notes);
+    sequence.circles = drawn.circles;
+    sequence.lines = drawn.lines;
     return sequence;
 }
 
