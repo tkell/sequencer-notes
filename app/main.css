@@ -6,6 +6,13 @@ body {
 textarea.seqInput {
   width: 512px;
   height: 16px;
+  border: 1px solid #bbbbbb;
+}
+
+textarea.areaInput {
+  width: 96px;
+  height: 16px;
+  display: inline-block;
 }
 
 textarea.zoomSeq {
@@ -17,24 +24,20 @@ textarea.zoomSeq {
   opacity: 0.5;
 }
 
-textarea#seq1 {
-  border: 1px solid #bbbbbb;
+textarea#area1 {
+  border: 1px solid #0000ff;
 }
-
-textarea#seq2 {
-  border: 1px solid #bbbbbb;
+textarea#area2 {
+  border: 1px solid #00a000;
 }
-
-textarea#seq3 {
-  border: 1px solid #bbbbbb;
+textarea#area3 {
+  border: 1px solid #ff4500;
 }
-
-textarea#seq4 {
-  border: 1px solid #bbbbbb;
+textarea#area4 {
+  border: 1px solid #ff1493;
 }
-
-textarea#seq5 {
-  border: 1px solid #bbbbbb;
+textarea#area5 {
+  border: 1px solid #ff1493;
 }
 
 span.midiNote {

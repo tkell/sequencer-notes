@@ -241,8 +241,8 @@ function createNoteMap(areas) {
         var area = areas[i];
         var layout = area.layout;
         var index = i;
-        for (var x = layout[0]; x <= layout[1]; x++) {
-            for (var y = layout[2]; y <= layout[3]; y++) {
+        for (var x = layout[0]; x <= layout[2]; x++) {
+            for (var y = layout[1]; y <= layout[3]; y++) {
                 // we can just store the index here!
                 noteMap[x][y] = index;
             }
@@ -257,19 +257,12 @@ var transport = {
     "lookAhead": 0.10, // seconds
     "scheduleInterval": 30, // milliseconds
     "sequences": [],
-    "areas": [
-        createArea("#00a000", 60, [1, 7, 2, 7], 0),
-        createArea("#0000ff", 62, [9, 14, 2, 6], 1),
-        createArea("#ff4500", 64, [16, 23, 1, 5], 2),
-        createArea("#4b0082", 65, [24, 31, 4, 7], 3),
-        createArea("#ff1493", 67, [4, 30, 10, 14], 4),
-        ],
+    "areas": [],
     "noteMap": {},
     "midiActivated": false,
     "midiOutputs": [],
     "midiIndex": 0,
 }
-transport.noteMap = createNoteMap(transport.areas);
 
 // Helper function to do playback and visuals
 function doPlay(sequence, playTime, visualDelay, midiChannel) {
@@ -833,21 +826,31 @@ for (var i = 0; i < inputs.length; i++) {
     transport.sequences[i] = initSequence(0.8);
 }
 
+var areaInputs = document.getElementsByClassName("areaInput");
+var setupColors = ["#0000ff", "#00a000", "#ff4500", "#4b0082", "#ff1493"];
+var setupMidiNotes = [60, 62, 64, 65, 67]
+for (var i = 0; i < areaInputs.length; i++) {
+    var input = areaInputs[i];
+    var layout = input.value.split(",").map(Number);
+    transport.areas[i] = createArea(setupColors[i], setupMidiNotes[i], layout, i);
+    // gotta add keypress stuff!
+}
+
 for (var i = 0; i < transport.areas.length; i++) {
     var url = "audio/" + audioUrls[i];
     loadAudio(url, transport.areas[i]);
 }
 
+transport.noteMap = createNoteMap(transport.areas);
 window.onkeypress = processGlobalInput;
 
 // Unsure why xLength is 1025 and not 1028?
 drawGrid(0, 0, 996, 480, 15, 31, "#888888");
-
 for (var i = 0; i < transport.areas.length; i++) {
     var area = transport.areas[i].layout;
     var x1 = area[0];
-    var x2 = area[1];
-    var y1 = area[2];
+    var y1 = area[1];
+    var x2 = area[2];
     var y2 = area[3];
     var color = transport.areas[i].color;
     drawDotArea(x1, x2, y1, y2, color);
