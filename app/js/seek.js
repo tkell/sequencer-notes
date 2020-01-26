@@ -5,6 +5,7 @@ function drawDot(x, y, width, height, color) {
     var rect = new Rectangle(x, y, width, height);
     var path = new Path.Rectangle(rect);
     path.fillColor = color;
+    path.opacity = 0.33;
 }
 
 function drawDots(xCenter, yCenter, color, offset) {
@@ -22,19 +23,33 @@ function drawDotArea(xStart, xEnd, yStart, yEnd, color) {
         var x = i * gridSize;
         for (var j = yStart; j <= yEnd; j++) {
             var y = j * gridSize
-            if (i === xStart || j === yStart || i === xEnd || j  === yEnd) {
-                drawDots(x, y, color, gridSize / 2);
-            }
+            drawDots(x, y, color, gridSize / 2);
         }
     }
+    drawDotSquare(xStart, yStart, xEnd, yEnd, color);
 }
 
-function drawLine(startX, startY, offsetX, offsetY, color) {
+function drawDotSquare(xStart, yStart, xEnd, yEnd, color) {
+    var offset = 2;
+    var opacity = 0.5;
+    var xLoc1 = xStart * gridSize - (gridSize / 2) + offset;
+    var yLoc1 = yStart * gridSize - (gridSize / 2) + offset;
+    var xLoc2 = xEnd * gridSize + (gridSize / 2) - offset;
+    var yLoc2 = yEnd * gridSize + (gridSize / 2) - offset;
+    drawLine(xLoc1, yLoc1, xLoc2 - xLoc1, 0, color, 4, opacity);
+    drawLine(xLoc1, yLoc1, 0, yLoc2 - yLoc1, color, 4, opacity);
+    drawLine(xLoc2, yLoc1, 0, yLoc2 - yLoc1, color, 4, opacity);
+    drawLine(xLoc2, yLoc2, xLoc1 - xLoc2, 0, color, 4, opacity);
+}
+
+function drawLine(startX, startY, offsetX, offsetY, color, strokeWidth, opacity) {
     var path = new Path();
     path.strokeColor = color;
     var start = new Point(startX, startY);
     path.moveTo(start);
     path.lineTo(start + [offsetX, offsetY]);
+    path.strokeWidth = strokeWidth;
+    path.opacity = opacity;
     return path;
 }
 
@@ -42,13 +57,13 @@ function drawGrid(startX, startY, xLength, yLength, numRows, numCols, color) {
     for (var i = 0; i <= numRows; i++) {
         var x = startX;
         var y = startY + (gridSize * i);
-        drawLine(x, y, xLength, 0, color);
+        drawLine(x, y, xLength, 0, color, 1, 1.0);
     }
 
     for (var i = 0; i <= numCols; i++) {
         var x = startX + (gridSize * i);
         var y = startY
-        drawLine(x, y, 0, yLength, color);
+        drawLine(x, y, 0, yLength, color, 1, 1.0);
     }
 }
 
@@ -66,7 +81,7 @@ function drawGridLine(x1, y1, x2, y2, color) {
     var yLoc1 = y1 * gridSize;
     var xLoc2 = x2 * gridSize;
     var yLoc2 = y2 * gridSize;
-    var line = drawLine(xLoc1, yLoc1, xLoc2 - xLoc1, yLoc2 - yLoc1, color)
+    var line = drawLine(xLoc1, yLoc1, xLoc2 - xLoc1, yLoc2 - yLoc1, color, 1, 1.0);
     return line;
 }
 
@@ -80,7 +95,11 @@ function drawSequence(points, notes) {
     // and the weird lists-of-different-lengths!
     for (var i = 0; i < points.length; i+=2) {
         var colorIndex = Math.floor(i / 2);
-        var color = transport.areas[notes[colorIndex]].color;
+        var note = notes[colorIndex];
+        var color = "#bbbbbb";
+        if (note !== -1) {
+            color = transport.areas[note].color;
+        }
         // Last line
         if (i === points.length - 2) {
             var x1 = points[i];
@@ -102,7 +121,11 @@ function drawSequence(points, notes) {
     // careful of the +=2 here!
     for (var j = 0; j < points.length; j+=2) {
         var colorIndex = Math.floor(j / 2);
-        var color = transport.areas[notes[colorIndex]].color;
+        var note = notes[colorIndex];
+        var color = "#bbbbbb";
+        if (note !== -1) {
+            color = transport.areas[note].color;
+        }
         var x = points[j];
         var y = points[j + 1];
         var circle = drawGridCircle(x, y, color);
@@ -212,6 +235,7 @@ function createNoteMap(areas) {
     var noteMap = new Array(gridSize);
     for (var i = 0; i < noteMap.length; i++) {
         noteMap[i] = new Array(gridSize / 2);
+        noteMap[i].fill(-1)
     }
     for (var i = 0; i < areas.length; i++) {
         var area = areas[i];
@@ -234,11 +258,11 @@ var transport = {
     "scheduleInterval": 30, // milliseconds
     "sequences": [],
     "areas": [
-        createArea("#453c7c", 60, [0, 7, 0, 7], 0),
-        createArea("#9acea1", 62, [8, 15, 0, 7], 1),
-        createArea("#aab2ff", 64, [16, 23, 0, 7], 2),
-        createArea("#34f7b1", 65, [24, 31, 0, 7], 3),
-        createArea("#f7347a", 67, [0, 31, 8, 15], 4),
+        createArea("#00a000", 60, [1, 7, 2, 7], 0),
+        createArea("#0000ff", 62, [8, 15, 0, 7], 1),
+        createArea("#ff4500", 64, [16, 23, 0, 7], 2),
+        createArea("#4b0082", 65, [24, 31, 0, 7], 3),
+        createArea("#ff1493", 67, [0, 31, 8, 15], 4),
         ],
     "noteMap": {},
     "midiActivated": false,
@@ -251,7 +275,6 @@ transport.noteMap = createNoteMap(transport.areas);
 function doPlay(sequence, playTime, visualDelay, midiChannel) {
     var circle = sequence.circles[sequence.currentIndex];
     var areaIndex = sequence.notes[sequence.currentIndex];
-    var areaToPlay = transport.areas[areaIndex];
     var nextIndex = (sequence.currentIndex + 1) % sequence.numNotes
     if (nextIndex === 0) {
         sequence.numLoops += 1;
@@ -259,11 +282,15 @@ function doPlay(sequence, playTime, visualDelay, midiChannel) {
 
     var timeToNextNote = sequence.noteTimes[sequence.currentIndex];
     playVisual(circle, visualDelay);
-    if (midiOutput) {
-        playMidi(playTime, areaToPlay.note, midiChannel, sequence.gain);
-    }
-    else {
-        playSound(playTime, areaToPlay.buffer, sequence.gain);
+    console.log(sequence.notes, areaToPlay);
+    if (areaIndex !== -1) {
+        var areaToPlay = transport.areas[areaIndex];
+        if (midiOutput) {
+            playMidi(playTime, areaToPlay.note, midiChannel, sequence.gain);
+        }
+        else {
+            playSound(playTime, areaToPlay.buffer, sequence.gain);
+        }
     }
     sequence.currentIndex = nextIndex;
     sequence.absoluteNextNoteTime = sequence.absoluteNextNoteTime += timeToNextNote
@@ -606,7 +633,10 @@ function processInput(event) {
             var x = pairs[pairs.length - 2];
             var y = pairs[pairs.length - 1];
             var noteIndex = transport.noteMap[x][y];
-            var color = transport.areas[noteIndex].color;
+            var color = '#bbbbbb';
+            if (noteIndex !== -1) {
+                color = transport.areas[noteIndex].color;
+            }
             var newLines = entryVisual(x, y, color)
             sequence.startLines.push.apply(sequence.startLines, newLines);
         }
