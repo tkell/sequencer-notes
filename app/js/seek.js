@@ -747,8 +747,19 @@ function processInput(event) {
     }
 }
 
-// BEGIN CLEAN UP HERE!
-// CHECK TO SEE IF MIDI STILL WORKS
+function deleteAreaGraphics(area) {
+    var dotsAndLinesToDelete = area.dotsAndLines;
+    var lines = dotsAndLinesToDelete.lines;
+    var allDots = dotsAndLinesToDelete.dots;
+    for (var i = 0; i < lines.length; i++) {
+        lines[i].remove();
+    }
+    for (var i = 0; i < allDots.length; i++) {
+        for (var j = 0; j < allDots[i].length; j++) {
+            allDots[i][j].remove();
+        }
+    }
+}
 function processAreaInput() {
     var areaIndex = parseInt(event.target.dataset.areaIndex);
     var area = transport.areas[areaIndex];
@@ -760,34 +771,24 @@ function processAreaInput() {
         event.preventDefault();
         event.stopPropagation();
 
-        // delete everything old
-        var dotsAndLinesToDelete = transport.areas[areaIndex].dotsAndLines;
-        var lines = dotsAndLinesToDelete.lines;
-        var allDots = dotsAndLinesToDelete.dots;
-        for (var i = 0; i < lines.length; i++) {
-            lines[i].remove();
-        }
-        for (var i = 0; i < allDots.length; i++) {
-            for (var j = 0; j < allDots[i].length; j++) {
-                allDots[i][j].remove();
-            }
-        }
+        deleteAreaGraphics(area);
 
-        // draw everything new
+        // create the new area
         var inputString = event.target.value;
         var layout = inputString.split(",").map(Number);
-        var buffer = transport.areas[areaIndex].buffer;
-        transport.areas[areaIndex] = createArea(setupColors[areaIndex], setupMidiNotes[areaIndex], layout, areaIndex);
-        transport.areas[areaIndex].buffer = buffer;
+        var buffer = area.buffer;
+        area = createArea(setupColors[areaIndex], setupMidiNotes[areaIndex], layout, areaIndex);
+        area.buffer = buffer;
 
-        var area = transport.areas[areaIndex].layout;
-        var x1 = area[0];
-        var y1 = area[1];
-        var x2 = area[2];
-        var y2 = area[3];
-        var color = transport.areas[areaIndex].color;
-        transport.areas[areaIndex].dotsAndLines = drawDotArea(x1, x2, y1, y2, color);
-        // Dealing with overlaps is going to be a pain
+        // draw everything new
+        var x1 = area.layout[0];
+        var y1 = area.layout[1];
+        var x2 = area.layout[2];
+        var y2 = area.layout[3];
+        area.dotsAndLines = drawDotArea(x1, x2, y1, y2, area.color);
+        transport.areas[areaIndex] = area;
+
+        // Recreate the noteMap - dealing with overlaps is going to be a pain
         transport.noteMap = createNoteMap(transport.areas);
 
         // re-note and re-draw all sequences, UGH
