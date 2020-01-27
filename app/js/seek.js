@@ -668,28 +668,6 @@ function processInput(event) {
         event.preventDefault();
         return;
     }
-    // ctrl: raise midi notes
-    if (event.ctrlKey) {
-        if (event.code.indexOf("Digit") == 0) {
-            event.preventDefault();
-            var offset = parseInt(event.code.replace("Digit", ""));
-            transport.areas[seqIndex].note += offset
-            sequence.midiNote = transport.areas[seqIndex].note;
-            displayMidiNotes(transport);
-        }
-        return; // just in case
-    }
-    // alt: lower midi notes
-    if (event.altKey) {
-        if (event.code.indexOf("Digit") == 0) {
-            event.preventDefault();
-            var offset = parseInt(event.code.replace("Digit", ""));
-            transport.areas[seqIndex].note -= offset
-            sequence.midiNote = transport.areas[seqIndex].note;
-            displayMidiNotes(transport);
-        }
-        return; // just in case
-    }
     // Enter:  update sequences or run an updating function
     if (event.keyCode === 13) {
         event.preventDefault();
@@ -766,6 +744,28 @@ function processAreaInput() {
     if (event.keyCode === 32) {
         event.preventDefault();
         return;
+    }
+    // ctrl: raise midi notes
+    if (event.ctrlKey) {
+        if (event.code.indexOf("Digit") == 0) {
+            event.preventDefault();
+            var offset = parseInt(event.code.replace("Digit", ""));
+            area.note += offset
+            displayMidiNotes(transport);
+            transport.noteMap = createNoteMap(transport.areas);
+        }
+        return; // just in case
+    }
+    // alt: lower midi notes
+    if (event.altKey) {
+        if (event.code.indexOf("Digit") == 0) {
+            event.preventDefault();
+            var offset = parseInt(event.code.replace("Digit", ""));
+            area.note -= offset
+            displayMidiNotes(transport);
+            transport.noteMap = createNoteMap(transport.areas);
+        }
+        return; // just in case
     }
     if (event.keyCode === 13) {
         event.preventDefault();
